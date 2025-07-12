@@ -1,0 +1,13 @@
+<button onclick="logout()">登出</button>
+<button onclick="closeLiff()">關閉 LIFF</button>
+
+<script>
+  function logout() {
+    liff.logout();
+    location.reload(); // 登出後重整頁面
+  }
+
+  function closeLiff() {
+    liff.closeWindow();
+  }
+</script>
