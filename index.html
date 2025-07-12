@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <title>LIFF 測試頁面</title>
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+</head>
+<body>
+  <h1>LIFF 測試頁面</h1>
+  <button onclick="getUserProfile()">取得使用者資訊</button>
+  <div id="user-info" style="margin-top: 20px;"></div>
+
+  <script>
+    const liffId = "【2007733246-PlbXYwGa】";
+
+    async function main() {
+      await liff.init({ liffId: liffId });
+      if (!liff.isLoggedIn()) {
+        liff.login();
+      }
+    }
+
+    async function getUserProfile() {
+      const profile = await liff.getProfile();
+      document.getElementById("user-info").innerHTML = `
+        <p><strong>名字：</strong> ${profile.displayName}</p>
+        <img src="${profile.pictureUrl}" alt="頭像" width="100">
+      `;
+    }
+
+    main();
+  </script>
+</body>
+</html>
