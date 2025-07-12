@@ -1,0 +1,1 @@
+await liff.init({ liffId: "2007733246-PlbXYwGa" });
