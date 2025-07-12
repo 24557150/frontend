@@ -3,30 +3,59 @@
 <head>
   <meta charset="UTF-8">
   <title>LIFF 測試頁面</title>
+
+  <!-- 📌 1. 載入 LIFF SDK -->
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 </head>
 <body>
+
+  <!-- 📌 2. 這是你畫面上看到的 HTML 元素 -->
   <h1>LIFF 測試頁面</h1>
   <button onclick="getUserProfile()">取得使用者資訊</button>
+  <button onclick="logout()">登出</button>
+  <button onclick="closeLiff()">關閉 LIFF</button>
   <div id="user-info" style="margin-top: 20px;"></div>
 
+  <!-- 📌 3. JavaScript 程式碼，寫功能邏輯 -->
   <script>
-    const liffId = "2007733246-nAexA2b9";
-
+    // 3-1 初始化 LIFF
     async function main() {
-      await liff.init({ liffId: liffId });
+      await liff.init({ liffId: "2007733246-nAexA2b9" }); // 你的 LIFF ID
       if (!liff.isLoggedIn()) {
-        liff.login();
+        liff.login(); // 如果還沒登入，導向 LINE 登入頁
       }
     }
 
+    // 3-2 取得使用者資料
     async function getUserProfile() {
-      const profile = await liff.getProfile();
-      document.getElementById("user-info").innerHTML = `
-        <p><strong>名字：</strong> ${profile.displayName}</p>
-        <img src="${profile.pictureUrl}" alt="頭像" width="100">
-      `;
+      try {
+        const profile = await liff.getProfile();
+        document.getElementById("user-info").innerHTML = `
+          <p><strong>名字：</strong> ${profile.displayName}</p>
+          <img src="${profile.pictureUrl}" width="100" alt="頭像">
+        `;
+      } catch (error) {
+        alert("取得資訊失敗：" + error.message);
+      }
     }
+
+    // 3-3 登出
+    function logout() {
+      liff.logout();
+      location.reload();
+    }
+
+    // 3-4 關閉 LIFF 頁面
+    function closeLiff() {
+      liff.closeWindow();
+    }
+
+    // 3-5 程式進入點
+    main();
+  </script>
+
+</body>
+</html>
 
     main();
   </script>
