@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>U2NET LIFF Demo</title>
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; }
+    img { max-width: 300px; margin-top: 10px; }
+  </style>
+</head>
+<body>
+  <h1>LINE LIFF 去背 Demo</h1>
+  <input type="file" id="imageInput" accept="image/*" />
+  <button id="uploadBtn">上傳並去背</button>
+  <p><img id="result" alt="去背結果會顯示在這"></p>
+
+  <script>
+    const apiUrl = 'https://your-api-url/upload'; // <-- 替換為你的後端 URL
+
+    async function uploadImage() {
+      const input = document.getElementById('imageInput');
+      if (!input.files || input.files.length === 0) {
+        alert('請先選擇圖片');
+        return;
+      }
+      const file = input.files[0];
+      const form = new FormData();
+      form.append('image', file);
+
+      document.getElementById('uploadBtn').innerText = '上傳中...';
+      document.getElementById('uploadBtn').disabled = true;
+
+      try {
+        const res = await fetch(apiUrl, {
+          method: 'POST',
+          body: form
+        });
+        const json = await res.json();
+        if (json.image_url) {
+          document.getElementById('result').src = json.image_url;
+        } else {
+          alert('伺服器錯誤：沒有 image_url。');
+        }
+      } catch (err) {
+        console.error(err);
+        alert('執行錯誤，請查看 console');
+      } finally {
+        document.getElementById('uploadBtn').innerText = '上傳並去背';
+        document.getElementById('uploadBtn').disabled = false;
+      }
+    }
+
+    async function main() {
+      try {
+        await liff.init({ liffId: 'YOUR_LIFF_ID' });
+        console.log('LIFF 初始化完成');
+      } catch (e) {
+        console.error('LIFF 初始化失敗', e);
+      }
+    }
+
+    document.getElementById('uploadBtn').addEventListener('click', uploadImage);
+    main();
+  </script>
+</body>
+</html>
