@@ -20,15 +20,16 @@
       color: #0066cc;
       text-decoration: underline;
     }
-    /* Modal 基本樣式 */
     .modal {
-      display: none; /* 預設隱藏 */
+      display: none;
       position: fixed;
       z-index: 1000;
-      left: 0; top: 0;
-      width: 100%; height: 100%;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
       overflow: auto;
-      background-color: rgba(0,0,0,0.5);
+      background-color: rgba(0, 0, 0, 0.5);
     }
     .modal-content {
       background-color: #fff;
@@ -37,7 +38,7 @@
       border-radius: 8px;
       width: 90%;
       max-width: 600px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
       position: relative;
     }
     .modal-content h2 {
@@ -57,7 +58,7 @@
       color: #000;
     }
     .modal-content p {
-      white-space: pre-wrap; /* 保留換行 */
+      white-space: pre-wrap;
       line-height: 1.5;
       color: #333;
     }
@@ -65,10 +66,15 @@
 </head>
 <body>
   <h1>使用 LIFF 上傳圖片</h1>
-  <button onclick="openCamera()">開啟相機/相簿</button>
+
+  <button onclick="openCamera()">📷 拍照</button>
+  <button onclick="openGallery()">🖼️ 從相簿選擇</button>
+
   <br /><br />
   <img id="preview" src="" width="300" style="display:none;" />
   <br />
+
+  <!-- 相機 input -->
   <input
     type="file"
     id="fileInput"
@@ -77,12 +83,20 @@
     style="display:none"
   />
 
+  <!-- 相簿 input -->
+  <input
+    type="file"
+    id="galleryInput"
+    accept="image/*"
+    style="display:none"
+  />
+
   <footer>
     <a onclick="showModal('privacy')">隱私政策</a>
     <a onclick="showModal('terms')">使用條款</a>
   </footer>
 
-  <!-- Modal 結構 -->
+  <!-- Modal -->
   <div id="modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
     <div class="modal-content">
       <span class="close-btn" onclick="closeModal()" aria-label="關閉">&times;</span>
@@ -94,17 +108,23 @@
   <script>
     async function main() {
       await liff.init({ liffId: "2007733246-nAexA2b9" });
-
       if (!liff.isLoggedIn()) {
         liff.login();
       }
     }
 
+    // 開啟相機 input
     function openCamera() {
       document.getElementById("fileInput").click();
     }
 
-    document.getElementById("fileInput").addEventListener("change", function (event) {
+    // 開啟相簿 input
+    function openGallery() {
+      document.getElementById("galleryInput").click();
+    }
+
+    // 圖片處理共用函式
+    function handleImageUpload(event) {
       const file = event.target.files[0];
       if (!file) return;
 
@@ -114,12 +134,17 @@
         img.src = e.target.result;
         img.style.display = "block";
 
-        // 這裡可以加上圖片上傳 API 呼叫
+        // 可加上圖片上傳邏輯
         // uploadImage(file);
       };
       reader.readAsDataURL(file);
-    });
+    }
 
+    // 綁定兩個 input 的 onchange
+    document.getElementById("fileInput").addEventListener("change", handleImageUpload);
+    document.getElementById("galleryInput").addEventListener("change", handleImageUpload);
+
+    // Modal 區塊
     const modal = document.getElementById("modal");
     const modalTitle = document.getElementById("modalTitle");
     const modalText = document.getElementById("modalText");
@@ -148,7 +173,6 @@
         modalText.textContent = termsOfUseText;
       }
       modal.style.display = "block";
-      // 讓 modal 取得焦點方便鍵盤操作
       modal.focus();
     }
 
@@ -156,7 +180,6 @@
       modal.style.display = "none";
     }
 
-    // 點 modal 外側關閉
     window.onclick = function (event) {
       if (event.target === modal) {
         closeModal();
@@ -165,5 +188,8 @@
 
     main();
   </script>
+</body>
+</html>
+
 </body>
 </html>
