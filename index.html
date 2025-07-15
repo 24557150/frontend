@@ -1,62 +1,108 @@
+
 <!DOCTYPE html>
-<html>
+<html dir="ltr" lang="zh_TW">
 <head>
-  <meta charset="utf-8" />
-  <title>LIFF 圖片選擇測試</title>
-  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+      <script type="module" crossorigin src="https://static.line-scdn.net/line_web_login/edge/dist/assets/polyfills-DXtp5_sn.js"></script>
+
+
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>LINE Login</title>
+
+  <meta property="og:title" content="LINE Login">
+  <meta property="og:description" content="登入cloth">
+  <meta property="og:image" content="https://vos.line-scdn.net/login-web/img/favicon.ico">
+  <link rel="shortcut icon" type="image/x-icon" href="https://vos.line-scdn.net/login-web/img/favicon.ico">
+  <link rel="icon" type="image/x-icon" sizes="32x32" href="https://vos.line-scdn.net/login-web/img/favicon-32x32.png">
+  <link rel="icon" type="image/x-icon" sizes="16x16" href="https://vos.line-scdn.net/login-web/img/favicon-16x16.png">
+
+  <link rel="apple-touch-icon-precomposed" href="https://vos.line-scdn.net/login-web/img/apple-touch-icon-precomposed.png">
+
+<script>/* analytics */
+(function(g,d){
+  var v='release/stable';
+  g._trmq=[];g._trm=function(){g._trmq.push(arguments)};
+  g.onerror=function(m,f,l,c){g._trm('send','exception',m,f,l,c)};
+  var h=location.protocol==='https:'?'https://d.line-scdn.net':'http://d.line-cdn.net';
+  var s=d.createElement('script');s.async=1;
+  s.src=h+'/n/_4/torimochi.js/public/v1/'+v+'/min/torimochi.js';
+  var t=d.getElementsByTagName('script')[0];t.parentNode.insertBefore(s,t);
+})(window, document);
+
+_trm('performance', { rate: 0.05 });
+_trm('enable', { productKey: "line-web-login-real" });
+/* /analytics */</script>
+
+<script type="text/javascript" charset="UTF-8" src="https://access.line.me/oauth2/v2.1/messages"></script>
+
+      <script type="module" crossorigin src="https://static.line-scdn.net/line_web_login/edge/dist/assets/index-DvjpmWXX.js"></script>
+    <link rel="modulepreload" crossorigin href="https://static.line-scdn.net/line_web_login/edge/dist/assets/modulepreload-polyfill-Dqv5PPZA.js">
+    <link rel="modulepreload" crossorigin href="https://static.line-scdn.net/line_web_login/edge/dist/assets/common-Dd2EcrY2.js">
+    <link rel="modulepreload" crossorigin href="https://static.line-scdn.net/line_web_login/edge/dist/assets/Constant-DvWA3Li3.js">
+    <link rel="modulepreload" crossorigin href="https://static.line-scdn.net/line_web_login/edge/dist/assets/_commonjsHelpers-MdiGH4nz.js">
+    <link rel="modulepreload" crossorigin href="https://static.line-scdn.net/line_web_login/edge/dist/assets/createLayoutWrapper-Bcrn63iq.js">
+    <link rel="modulepreload" crossorigin href="https://static.line-scdn.net/line_web_login/edge/dist/assets/cPinCode-CG6Lx6XV.js">
+    <link rel="modulepreload" crossorigin href="https://static.line-scdn.net/line_web_login/edge/dist/assets/createRouter-BvkeISuu.js">
+    <link rel="modulepreload" crossorigin href="https://static.line-scdn.net/line_web_login/edge/dist/assets/OverlayMixin-jZEHrJoL.js">
+    <link rel="modulepreload" crossorigin href="https://static.line-scdn.net/line_web_login/edge/dist/assets/ldsg-popup-CdC0cCLK.js">
+    <link rel="modulepreload" crossorigin href="https://static.line-scdn.net/line_web_login/edge/dist/assets/ldsm-text-button-C33skrvi.js">
+    <link rel="modulepreload" crossorigin href="https://static.line-scdn.net/line_web_login/edge/dist/assets/_getPrototype-DC1EnnMy.js">
+    <link rel="modulepreload" crossorigin href="https://static.line-scdn.net/line_web_login/edge/dist/assets/lFooter01-CHrN8iQL.js">
+    <link rel="modulepreload" crossorigin href="https://static.line-scdn.net/line_web_login/edge/dist/assets/axiosPlugin-DSv1GksT.js">
+    <link rel="modulepreload" crossorigin href="https://static.line-scdn.net/line_web_login/edge/dist/assets/uaPlugin-B5rBq2VH.js">
+    <link rel="modulepreload" crossorigin href="https://static.line-scdn.net/line_web_login/edge/dist/assets/darkModePlugin-D6cUWaD6.js">
+    <link rel="stylesheet" href="https://static.line-scdn.net/line_web_login/edge/dist/assets/common-Xsu5maJP.css">
+    <link rel="stylesheet" href="https://static.line-scdn.net/line_web_login/edge/dist/assets/cPinCode-GXH-KACv.css">
+    <link rel="stylesheet" href="https://static.line-scdn.net/line_web_login/edge/dist/assets/ldsm-text-button-BXS5hqXD.css">
+    <link rel="stylesheet" href="https://static.line-scdn.net/line_web_login/edge/dist/assets/ldsm-semantic-dark-mode-8-gBXRYH.css">
+    <link rel="stylesheet" href="https://static.line-scdn.net/line_web_login/edge/dist/assets/lFooter01-1Nnu-4mf.css">
+    <link rel="stylesheet" href="https://static.line-scdn.net/line_web_login/edge/dist/assets/index-BzE6yBlA.css">
+    <link rel="stylesheet" href="https://static.line-scdn.net/line_web_login/edge/dist/assets/ldsm-semantic-dark-mode-8-gBXRYH.css">
+    <link rel="stylesheet" href="https://static.line-scdn.net/line_web_login/edge/dist/assets/main-Dki7GDmp.css">
+
 </head>
-<body>
-  <h1>📷 LIFF 圖片選擇測試</h1>
-  <button onclick="chooseMedia()">選擇圖片</button>
-  <br><br>
-  <img id="preview" style="display:none;" width="300"/>
 
-  <script>
-    async function main() {
-      try {
-        console.log("🔄 初始化 LIFF...");
-        await liff.init({ liffId: "2007733246-nAexA2b9" });  // 替換為你的 LIFF ID
-        console.log("✅ LIFF 初始化完成");
+<body ontouchstart="">
+<noscript>
+  <div class="LyWrap">
+    <!--CONTENTS-AREA-->
+    <div class="LyContents" role="main">
+      <div class="lyContentsInner">
+        <div class="MdBox01">
+          <section class="mdBox01Inner MdLYR03Error">
+            <div class="MdLogo01 mdLogo01P01">
+              <h1 class="mdLogo01Img">LINE</h1>
+            </div>
+            <h2 class="mdLYR03Title mdMN10Title">
+              <span class="mdLYR03Icon MdIco01Alert">alert</span>
+              <span>JavaScript錯誤</span>
+            </h2>
+            <p class="mdLYR03Desc mdMN10Desc">
+              您尚未在瀏覽器中啟用JavaScript。<br />
+請先啟用JavaScript，才可使用本網站提供的功能。            </p>
+          </section>
+        </div>
+      </div>
+    </div>
+  </div>
+</noscript>
 
-        if (!liff.isLoggedIn()) {
-          console.log("🔒 尚未登入，跳轉登入...");
-          liff.login();
-        } else {
-          console.log("✅ 已登入 LIFF");
-        }
-      } catch (err) {
-        console.error("❌ LIFF 初始化錯誤", err);
-      }
-    }
+<div id="__layout">
+  <div class="LyBody" id="app">
+    <app app-data="{&quot;props&quot;:{&quot;channel-id&quot;:2007733246,&quot;is-error&quot;:false,&quot;is-captcha&quot;:false,&quot;captcha-url&quot;:&quot;/dialog/captcha/BzmBMrV3oqSxZY3BxjhAFNzTYqFT4XX0b3qoeG6x6Tc&quot;,&quot;is-recaptcha&quot;:false,&quot;recaptcha-key&quot;:&quot;6LdXvWEbAAAAANgA_K7oaUt_EtHee2RK1x0LJK3e&quot;,&quot;recaptcha-action&quot;:&quot;login_v21&quot;,&quot;line-rsa-url&quot;:&quot;/authct/v1/keys/line&quot;,&quot;pincode-url&quot;:&quot;/pincode&quot;,&quot;open-authentication-session-url&quot;:&quot;/oauth2/v2.1/authn/session&quot;,&quot;open-authn-session-api-url&quot;:&quot;/oauth2/v2.1/authn/session&quot;,&quot;issue-line-enc-key-api-url&quot;:&quot;/oauth2/v2.1/authn/keys/line&quot;,&quot;wait-pin-code-verification-api-url&quot;:&quot;/qrlogin/oauth2/v2.1/authn/pin/wait&quot;,&quot;qr-code-url&quot;:&quot;/qrlogin/v1/session&quot;,&quot;wait-qr-code-verification-complete-url&quot;:&quot;/qrlogin/v1/qr/wait&quot;,&quot;wait-pin-code-verification-complete-url&quot;:&quot;/qrlogin/v1/pin/wait&quot;,&quot;enable-continue-without-login&quot;:false,&quot;switch-amr&quot;:true,&quot;login-retry-page-url&quot;:&quot;/oauth2/v2.1/noauto-login?returnUri=%2Foauth2%2Fv2.1%2Fauthorize%2Fconsent%3Fapp_id%3D2007733246-nAexA2b9%26client_id%3D2007733246%26scope%3Dchat_message.write%2520openid%2520profile%26state%3DUM8zTlxJXqS5%26response_type%3Dcode%26code_challenge_method%3DS256%26code_challenge%3Do1afJuZ4Honmr6P6pj2b4CPENO65kw9BXm7ExV1uaqI%26liff_sdk_version%3D2.27.0%26type%3DL%26redirect_uri%3Dhttps%253A%252F%252F24557150.github.io%252Fliff-test%252F%26bot_prompt%3Dnormal&amp;loginChannelId=2007733246&amp;switch_amr=true&amp;reqId=c9KswYFVQUKJleV70mYzA0&quot;,&quot;authorize-page-url&quot;:&quot;/oauth2/v2.1/authenticate&quot;,&quot;return-uri&quot;:&quot;/oauth2/v2.1/authorize/consent?app_id=2007733246-nAexA2b9&amp;client_id=2007733246&amp;scope=chat_message.write%20openid%20profile&amp;state=UM8zTlxJXqS5&amp;response_type=code&amp;code_challenge_method=S256&amp;code_challenge=o1afJuZ4Honmr6P6pj2b4CPENO65kw9BXm7ExV1uaqI&amp;liff_sdk_version=2.27.0&amp;type=L&amp;redirect_uri=https%3A%2F%2F24557150.github.io%2Fliff-test%2F&amp;bot_prompt=normal&quot;,&quot;auto-login-fallback-url&quot;:&quot;https://access-auto.line.me/oauth2/v2.1/login?returnUri=%2Foauth2%2Fv2.1%2Fauthorize%2Fconsent%3Fapp_id%3D2007733246-nAexA2b9%26client_id%3D2007733246%26scope%3Dchat_message.write%2520openid%2520profile%26state%3DUM8zTlxJXqS5%26response_type%3Dcode%26code_challenge_method%3DS256%26code_challenge%3Do1afJuZ4Honmr6P6pj2b4CPENO65kw9BXm7ExV1uaqI%26liff_sdk_version%3D2.27.0%26type%3DL%26redirect_uri%3Dhttps%253A%252F%252F24557150.github.io%252Fliff-test%252F%26bot_prompt%3Dnormal&amp;loginChannelId=2007733246&amp;loginState=KXsAy7tYJdDo8OkSUuZGRS&quot;},&quot;slots&quot;:{&quot;serverside_field&quot;:[{&quot;type&quot;:&quot;hidden&quot;,&quot;name&quot;:&quot;loginChannelId&quot;,&quot;value&quot;:&quot;2007733246&quot;},{&quot;type&quot;:&quot;hidden&quot;,&quot;name&quot;:&quot;returnUri&quot;,&quot;value&quot;:&quot;/oauth2/v2.1/authorize/consent?app_id=2007733246-nAexA2b9&amp;client_id=2007733246&amp;scope=chat_message.write%20openid%20profile&amp;state=UM8zTlxJXqS5&amp;response_type=code&amp;code_challenge_method=S256&amp;code_challenge=o1afJuZ4Honmr6P6pj2b4CPENO65kw9BXm7ExV1uaqI&amp;liff_sdk_version=2.27.0&amp;type=L&amp;redirect_uri=https%3A%2F%2F24557150.github.io%2Fliff-test%2F&amp;bot_prompt=normal&quot;},{&quot;type&quot;:&quot;hidden&quot;,&quot;name&quot;:&quot;displayType&quot;,&quot;value&quot;:&quot;b&quot;},{&quot;type&quot;:&quot;hidden&quot;,&quot;name&quot;:&quot;captchaKey&quot;,&quot;value&quot;:&quot;BzmBMrV3oqSxZY3BxjhAFNzTYqFT4XX0b3qoeG6x6Tc&quot;},{&quot;type&quot;:&quot;hidden&quot;,&quot;name&quot;:&quot;__csrf&quot;,&quot;value&quot;:&quot;NmgMxbvDkOtnBjjL0pSkI4&quot;,&quot;id&quot;:&quot;__csrf&quot;},{&quot;type&quot;:&quot;hidden&quot;,&quot;name&quot;:&quot;lang&quot;,&quot;value&quot;:&quot;zh_TW&quot;}],&quot;serverside_redirect_query&quot;:[{&quot;type&quot;:&quot;hidden&quot;,&quot;name&quot;:&quot;loginChannelId&quot;,&quot;value&quot;:&quot;2007733246&quot;},{&quot;type&quot;:&quot;hidden&quot;,&quot;name&quot;:&quot;returnUri&quot;,&quot;value&quot;:&quot;/oauth2/v2.1/authorize/consent?app_id=2007733246-nAexA2b9&amp;client_id=2007733246&amp;scope=chat_message.write%20openid%20profile&amp;state=UM8zTlxJXqS5&amp;response_type=code&amp;code_challenge_method=S256&amp;code_challenge=o1afJuZ4Honmr6P6pj2b4CPENO65kw9BXm7ExV1uaqI&amp;liff_sdk_version=2.27.0&amp;type=L&amp;redirect_uri=https%3A%2F%2F24557150.github.io%2Fliff-test%2F&amp;bot_prompt=normal&quot;},{&quot;type&quot;:&quot;hidden&quot;,&quot;name&quot;:&quot;__csrf&quot;,&quot;value&quot;:&quot;NmgMxbvDkOtnBjjL0pSkI4&quot;,&quot;id&quot;:&quot;__csrf&quot;}]}}" />
+  </div>
 
-    async function chooseMedia() {
-      try {
-        console.log("🖼️ 開始選擇圖片...");
-        const result = await liff.chooseMedia({
-          count: 1,
-          mediaType: 'image',
-          source: ['camera', 'gallery']
-        });
+  <script src="https://static.line-scdn.net/line_web_login/1980c203b61/dist/lc_common.js"></script>
+</div>
 
-        console.log("📂 選擇結果：", result);
+<script>
+  var lap_optout_check_api_url = "https://optout-api.tr.line.me/enabled";
+</script>
 
-        if (result && result.media.length > 0) {
-          const blob = result.media[0].blob;
-          const reader = new FileReader();
-          reader.onload = function (e) {
-            const img = document.getElementById("preview");
-            img.src = e.target.result;
-            img.style.display = "block";
-          };
-          reader.readAsDataURL(blob);
-        }
-      } catch (err) {
-        console.error("❌ 選擇圖片失敗", err);
-      }
-    }
+<script src="https://static.line-scdn.net/line_web_login/1980c203b61/dist/lap_optout_check.min.js"></script>
 
-    main();
-  </script>
+
+
 </body>
 </html>
-
