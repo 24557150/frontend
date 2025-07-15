@@ -74,16 +74,15 @@
   <img id="preview" src="" width="300" style="display:none;" />
   <br />
 
-  <!-- 相機 input -->
+  <!-- 相機 input（capture 已移除）-->
   <input
     type="file"
     id="fileInput"
     accept="image/*"
-    capture="environment"
     style="display:none"
   />
 
-  <!-- 相簿 input -->
+  <!-- 相簿 input（也移除 capture，讓系統控制來源）-->
   <input
     type="file"
     id="galleryInput"
@@ -113,17 +112,17 @@
       }
     }
 
-    // 開啟相機 input
+    // 開啟相機 input（其實現在是系統選單，非強制相機）
     function openCamera() {
       document.getElementById("fileInput").click();
     }
 
-    // 開啟相簿 input
+    // 開啟相簿 input（其實與上方功能相同，只是為了區分按鈕）
     function openGallery() {
       document.getElementById("galleryInput").click();
     }
 
-    // 圖片處理共用函式
+    // 處理圖片預覽
     function handleImageUpload(event) {
       const file = event.target.files[0];
       if (!file) return;
@@ -133,18 +132,15 @@
         const img = document.getElementById("preview");
         img.src = e.target.result;
         img.style.display = "block";
-
-        // 可加上圖片上傳邏輯
-        // uploadImage(file);
       };
       reader.readAsDataURL(file);
     }
 
-    // 綁定兩個 input 的 onchange
+    // 綁定事件
     document.getElementById("fileInput").addEventListener("change", handleImageUpload);
     document.getElementById("galleryInput").addEventListener("change", handleImageUpload);
 
-    // Modal 區塊
+    // Modal
     const modal = document.getElementById("modal");
     const modalTitle = document.getElementById("modalTitle");
     const modalText = document.getElementById("modalText");
