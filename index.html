@@ -1,18 +1,96 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <meta charset="utf-8">
+  <meta charset="utf-8" />
   <title>LIFF 相機上傳圖片</title>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+    }
+    footer {
+      margin-top: 40px;
+      font-size: 14px;
+      color: #555;
+    }
+    footer a {
+      margin-right: 15px;
+      cursor: pointer;
+      color: #0066cc;
+      text-decoration: underline;
+    }
+    /* Modal 基本樣式 */
+    .modal {
+      display: none; /* 預設隱藏 */
+      position: fixed;
+      z-index: 1000;
+      left: 0; top: 0;
+      width: 100%; height: 100%;
+      overflow: auto;
+      background-color: rgba(0,0,0,0.5);
+    }
+    .modal-content {
+      background-color: #fff;
+      margin: 10% auto;
+      padding: 20px;
+      border-radius: 8px;
+      width: 90%;
+      max-width: 600px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+      position: relative;
+    }
+    .modal-content h2 {
+      margin-top: 0;
+    }
+    .close-btn {
+      position: absolute;
+      top: 12px;
+      right: 16px;
+      font-size: 24px;
+      font-weight: bold;
+      color: #888;
+      cursor: pointer;
+      user-select: none;
+    }
+    .close-btn:hover {
+      color: #000;
+    }
+    .modal-content p {
+      white-space: pre-wrap; /* 保留換行 */
+      line-height: 1.5;
+      color: #333;
+    }
+  </style>
 </head>
 <body>
   <h1>使用 LIFF 上傳圖片</h1>
   <button onclick="openCamera()">開啟相機/相簿</button>
-  <br><br>
-  <img id="preview" src="" width="300" style="display:none;"/>
-  <br>
-  <input type="file" id="fileInput" accept="image/*" capture="environment" style="display:none;">
-  
+  <br /><br />
+  <img id="preview" src="" width="300" style="display:none;" />
+  <br />
+  <input
+    type="file"
+    id="fileInput"
+    accept="image/*"
+    capture="environment"
+    style="display:none"
+  />
+
+  <footer>
+    <a onclick="showModal('privacy')">隱私政策</a>
+    <a onclick="showModal('terms')">使用條款</a>
+  </footer>
+
+  <!-- Modal 結構 -->
+  <div id="modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal-content">
+      <span class="close-btn" onclick="closeModal()" aria-label="關閉">&times;</span>
+      <h2 id="modalTitle"></h2>
+      <p id="modalText"></p>
+    </div>
+  </div>
+
   <script>
     async function main() {
       await liff.init({ liffId: "2007733246-nAexA2b9" });
@@ -23,31 +101,68 @@
     }
 
     function openCamera() {
-      document.getElementById('fileInput').click();
+      document.getElementById("fileInput").click();
     }
 
-    document.getElementById('fileInput').addEventListener('change', function (event) {
+    document.getElementById("fileInput").addEventListener("change", function (event) {
       const file = event.target.files[0];
       if (!file) return;
 
       const reader = new FileReader();
       reader.onload = function (e) {
-        const img = document.getElementById('preview');
+        const img = document.getElementById("preview");
         img.src = e.target.result;
-        img.style.display = 'block';
-        
+        img.style.display = "block";
+
         // 這裡可以加上圖片上傳 API 呼叫
         // uploadImage(file);
       };
       reader.readAsDataURL(file);
     });
 
-    main();
-  </script>
-</body>
-</html>
+    const modal = document.getElementById("modal");
+    const modalTitle = document.getElementById("modalTitle");
+    const modalText = document.getElementById("modalText");
 
-    document.getElementById('uploadBtn').addEventListener('click', uploadImage);
+    const privacyPolicyText = `歡迎使用本頻道（以下稱「我們」）。我們尊重並保護您的隱私。
+我們不會收集您的個人身份資訊，除非您主動提供。
+我們可能使用非個人資訊（如瀏覽習慣、裝置類型）來改善服務。
+本頻道不會將您的資訊出售或分享給第三方。
+如有隱私問題，歡迎聯繫我們。感謝您的支持！`;
+
+    const termsOfUseText = `使用條款
+使用本頻道即表示您同意遵守以下條款：
+1. 本頻道內容僅供參考，不構成專業建議。
+2. 禁止發布違法、有害、侵權或不當內容。
+3. 頻道有權刪除違規評論或內容，保留管理權利。
+4. 使用者須自行承擔因使用本頻道內容產生的風險與責任。
+5. 本條款可隨時更新，恕不另行通知。
+如有疑問，請聯繫我們。`;
+
+    function showModal(type) {
+      if (type === "privacy") {
+        modalTitle.textContent = "隱私政策";
+        modalText.textContent = privacyPolicyText;
+      } else if (type === "terms") {
+        modalTitle.textContent = "使用條款";
+        modalText.textContent = termsOfUseText;
+      }
+      modal.style.display = "block";
+      // 讓 modal 取得焦點方便鍵盤操作
+      modal.focus();
+    }
+
+    function closeModal() {
+      modal.style.display = "none";
+    }
+
+    // 點 modal 外側關閉
+    window.onclick = function (event) {
+      if (event.target === modal) {
+        closeModal();
+      }
+    };
+
     main();
   </script>
 </body>
