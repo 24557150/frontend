@@ -79,7 +79,6 @@
     type="file"
     id="fileInput"
     accept="image/*"
-    capture="environment"
     style="display:none"
   />
 
@@ -107,40 +106,53 @@
 
   <script>
     async function main() {
-      await liff.init({ liffId: "2007733246-nAexA2b9" });
-      if (!liff.isLoggedIn()) {
-        liff.login();
+      try {
+        await liff.init({ liffId: "2007733246-nAexA2b9" });
+        console.log("✅ LIFF 初始化完成");
+
+        if (!liff.isLoggedIn()) {
+          console.log("🔒 尚未登入，正在導向登入...");
+          liff.login();
+        } else {
+          console.log("✅ 已登入 LIFF");
+        }
+      } catch (err) {
+        console.error("❌ LIFF 初始化失敗", err);
       }
     }
 
     // 開啟相機 input
     function openCamera() {
+      console.log("📸 使用者點擊拍照");
       document.getElementById("fileInput").click();
     }
 
     // 開啟相簿 input
     function openGallery() {
+      console.log("🖼️ 使用者點擊從相簿選擇");
       document.getElementById("galleryInput").click();
     }
 
-    // 圖片處理共用函式
+    // 圖片處理
     function handleImageUpload(event) {
       const file = event.target.files[0];
-      if (!file) return;
+      if (!file) {
+        console.log("⚠️ 沒有選擇任何圖片");
+        return;
+      }
+
+      console.log("📂 已選擇圖片：", file.name);
 
       const reader = new FileReader();
       reader.onload = function (e) {
         const img = document.getElementById("preview");
         img.src = e.target.result;
         img.style.display = "block";
-
-        // 可加上圖片上傳邏輯
-        // uploadImage(file);
       };
       reader.readAsDataURL(file);
     }
 
-    // 綁定兩個 input 的 onchange
+    // 綁定 onchange 事件
     document.getElementById("fileInput").addEventListener("change", handleImageUpload);
     document.getElementById("galleryInput").addEventListener("change", handleImageUpload);
 
@@ -149,20 +161,23 @@
     const modalTitle = document.getElementById("modalTitle");
     const modalText = document.getElementById("modalText");
 
-    const privacyPolicyText = 歡迎使用本頻道（以下稱「我們」）。我們尊重並保護您的隱私。
+    const privacyPolicyText = `
+歡迎使用本頻道（以下稱「我們」）。我們尊重並保護您的隱私。
 我們不會收集您的個人身份資訊，除非您主動提供。
 我們可能使用非個人資訊（如瀏覽習慣、裝置類型）來改善服務。
 本頻道不會將您的資訊出售或分享給第三方。
-如有隱私問題，歡迎聯繫我們。感謝您的支持！;
+如有隱私問題，歡迎聯繫我們。感謝您的支持！
+`;
 
-    const termsOfUseText = 使用條款
-使用本頻道即表示您同意遵守以下條款：
+    const termsOfUseText = `
+使用條款：
 1. 本頻道內容僅供參考，不構成專業建議。
 2. 禁止發布違法、有害、侵權或不當內容。
 3. 頻道有權刪除違規評論或內容，保留管理權利。
 4. 使用者須自行承擔因使用本頻道內容產生的風險與責任。
 5. 本條款可隨時更新，恕不另行通知。
-如有疑問，請聯繫我們。;
+如有疑問，請聯繫我們。
+`;
 
     function showModal(type) {
       if (type === "privacy") {
@@ -173,7 +188,6 @@
         modalText.textContent = termsOfUseText;
       }
       modal.style.display = "block";
-      modal.focus();
     }
 
     function closeModal() {
@@ -186,10 +200,8 @@
       }
     };
 
+    // 啟動
     main();
   </script>
-</body>
-</html>
-
 </body>
 </html>
