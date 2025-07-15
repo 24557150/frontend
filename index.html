@@ -74,15 +74,16 @@
   <img id="preview" src="" width="300" style="display:none;" />
   <br />
 
-  <!-- 相機 input（capture 已移除）-->
+  <!-- 相機 input -->
   <input
     type="file"
     id="fileInput"
     accept="image/*"
+    capture="environment"
     style="display:none"
   />
 
-  <!-- 相簿 input（也移除 capture，讓系統控制來源）-->
+  <!-- 相簿 input -->
   <input
     type="file"
     id="galleryInput"
@@ -112,17 +113,17 @@
       }
     }
 
-    // 開啟相機 input（其實現在是系統選單，非強制相機）
+    // 開啟相機 input
     function openCamera() {
       document.getElementById("fileInput").click();
     }
 
-    // 開啟相簿 input（其實與上方功能相同，只是為了區分按鈕）
+    // 開啟相簿 input
     function openGallery() {
       document.getElementById("galleryInput").click();
     }
 
-    // 處理圖片預覽
+    // 圖片處理共用函式
     function handleImageUpload(event) {
       const file = event.target.files[0];
       if (!file) return;
@@ -132,33 +133,36 @@
         const img = document.getElementById("preview");
         img.src = e.target.result;
         img.style.display = "block";
+
+        // 可加上圖片上傳邏輯
+        // uploadImage(file);
       };
       reader.readAsDataURL(file);
     }
 
-    // 綁定事件
+    // 綁定兩個 input 的 onchange
     document.getElementById("fileInput").addEventListener("change", handleImageUpload);
     document.getElementById("galleryInput").addEventListener("change", handleImageUpload);
 
-    // Modal
+    // Modal 區塊
     const modal = document.getElementById("modal");
     const modalTitle = document.getElementById("modalTitle");
     const modalText = document.getElementById("modalText");
 
-    const privacyPolicyText = `歡迎使用本頻道（以下稱「我們」）。我們尊重並保護您的隱私。
+    const privacyPolicyText = 歡迎使用本頻道（以下稱「我們」）。我們尊重並保護您的隱私。
 我們不會收集您的個人身份資訊，除非您主動提供。
 我們可能使用非個人資訊（如瀏覽習慣、裝置類型）來改善服務。
 本頻道不會將您的資訊出售或分享給第三方。
-如有隱私問題，歡迎聯繫我們。感謝您的支持！`;
+如有隱私問題，歡迎聯繫我們。感謝您的支持！;
 
-    const termsOfUseText = `使用條款
+    const termsOfUseText = 使用條款
 使用本頻道即表示您同意遵守以下條款：
 1. 本頻道內容僅供參考，不構成專業建議。
 2. 禁止發布違法、有害、侵權或不當內容。
 3. 頻道有權刪除違規評論或內容，保留管理權利。
 4. 使用者須自行承擔因使用本頻道內容產生的風險與責任。
 5. 本條款可隨時更新，恕不另行通知。
-如有疑問，請聯繫我們。`;
+如有疑問，請聯繫我們。;
 
     function showModal(type) {
       if (type === "privacy") {
