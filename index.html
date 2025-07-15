@@ -3,162 +3,478 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>LIFF 圖片選擇測試 (整合登入版)</title>
+  <meta name="description" content="LIFF 圖片選擇應用程式 - 支援 LINE 登入和圖片選擇功能" />
+  <meta name="keywords" content="LIFF, LINE, 圖片選擇, 相機, 相簿" />
+  <meta name="author" content="LIFF App Developer" />
+  
+  <!-- Open Graph Meta Tags for better sharing -->
+  <meta property="og:title" content="LIFF 圖片選擇應用程式" />
+  <meta property="og:description" content="支援 LINE 登入和圖片選擇功能的 LIFF 應用程式" />
+  <meta property="og:type" content="website" />
+  
+  <title>LIFF 圖片選擇應用程式</title>
+  
+  <!-- LIFF SDK -->
   <script src="https://static.line-scdn.net/liff/edge/2.27.0/sdk.js"></script>
+  
+  <!-- Favicon -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📷</text></svg>" />
+  
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      padding: 20px;
-      max-width: 600px;
-      margin: 0 auto;
-      background-color: #f8f9fa;
+    :root {
+      --line-green: #00C300;
+      --line-green-dark: #00A300;
+      --line-green-light: #06C755;
+      --success-bg: #d4edda;
+      --success-text: #155724;
+      --error-bg: #f8d7da;
+      --error-text: #721c24;
+      --warning-bg: #fff3cd;
+      --warning-text: #856404;
+      --info-bg: #d1ecf1;
+      --info-text: #0c5460;
+      --border-color: #e0e0e0;
+      --shadow: 0 2px 10px rgba(0,0,0,0.1);
+      --border-radius: 8px;
     }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      line-height: 1.6;
+      color: #333;
+      padding: 20px;
+      max-width: 800px;
+      margin: 0 auto;
+      background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+      min-height: 100vh;
+    }
+
     .container {
       background: white;
-      padding: 20px;
-      border-radius: 10px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      padding: 30px;
+      border-radius: 15px;
+      box-shadow: var(--shadow);
+      position: relative;
+      overflow: hidden;
     }
+
+    .container::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, var(--line-green), var(--line-green-light));
+    }
+
+    h1 {
+      text-align: center;
+      color: #333;
+      margin-bottom: 30px;
+      font-size: 2rem;
+      font-weight: 600;
+    }
+
     .status {
-      padding: 10px;
-      margin: 10px 0;
-      border-radius: 5px;
-      font-weight: bold;
+      padding: 12px 16px;
+      margin: 12px 0;
+      border-radius: var(--border-radius);
+      font-weight: 500;
+      border-left: 4px solid;
+      animation: slideIn 0.3s ease-out;
     }
-    .success { background-color: #d4edda; color: #155724; }
-    .error { background-color: #f8d7da; color: #721c24; }
-    .warning { background-color: #fff3cd; color: #856404; }
-    .info { background-color: #d1ecf1; color: #0c5460; }
+
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateX(-20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+
+    .success { 
+      background-color: var(--success-bg); 
+      color: var(--success-text);
+      border-left-color: var(--success-text);
+    }
+    .error { 
+      background-color: var(--error-bg); 
+      color: var(--error-text);
+      border-left-color: var(--error-text);
+    }
+    .warning { 
+      background-color: var(--warning-bg); 
+      color: var(--warning-text);
+      border-left-color: var(--warning-text);
+    }
+    .info { 
+      background-color: var(--info-bg); 
+      color: var(--info-text);
+      border-left-color: var(--info-text);
+    }
+
     button {
       padding: 12px 24px;
       font-size: 16px;
-      background-color: #00C300;
+      background-color: var(--line-green);
       color: white;
       border: none;
-      border-radius: 5px;
+      border-radius: var(--border-radius);
       cursor: pointer;
-      margin: 10px 5px;
-      transition: background-color 0.3s;
+      margin: 8px 4px;
+      transition: all 0.3s ease;
+      font-weight: 500;
+      position: relative;
+      overflow: hidden;
     }
+
+    button::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+      transition: left 0.5s;
+    }
+
+    button:hover::before {
+      left: 100%;
+    }
+
     button:disabled {
       background-color: #ccc;
       cursor: not-allowed;
+      opacity: 0.6;
     }
+
     button:hover:not(:disabled) {
-      background-color: #00A300;
+      background-color: var(--line-green-dark);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,195,0,0.3);
     }
+
+    button:active:not(:disabled) {
+      transform: translateY(0);
+    }
+
     .login-btn {
-      background-color: #06C755;
+      background: linear-gradient(135deg, var(--line-green-light), var(--line-green));
       font-size: 18px;
-      padding: 15px 30px;
+      padding: 16px 32px;
+      border-radius: 25px;
+      box-shadow: 0 4px 15px rgba(6,199,85,0.3);
     }
-    .login-btn:hover {
-      background-color: #05B04A;
+
+    .login-btn:hover:not(:disabled) {
+      background: linear-gradient(135deg, var(--line-green), var(--line-green-dark));
+      transform: translateY(-3px);
+      box-shadow: 0 6px 20px rgba(6,199,85,0.4);
     }
+
     #userInfo {
-      background-color: #e8f5e8;
-      padding: 15px;
-      border-radius: 8px;
-      margin: 15px 0;
-      border-left: 4px solid #00C300;
+      background: linear-gradient(135deg, #e8f5e8, #f0f8f0);
+      padding: 20px;
+      border-radius: var(--border-radius);
+      margin: 20px 0;
+      border-left: 4px solid var(--line-green);
+      box-shadow: 0 2px 8px rgba(0,195,0,0.1);
     }
+
     #userInfo img {
       border-radius: 50%;
-      margin-right: 10px;
+      margin-right: 15px;
       vertical-align: middle;
+      border: 3px solid var(--line-green);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
     }
+
     #preview {
       max-width: 100%;
-      border: 2px solid #ddd;
-      border-radius: 5px;
-      margin-top: 10px;
+      border: 3px solid #ddd;
+      border-radius: var(--border-radius);
+      margin-top: 15px;
+      box-shadow: var(--shadow);
+      transition: all 0.3s ease;
     }
+
+    #preview:hover {
+      transform: scale(1.02);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+    }
+
     #debug {
       background-color: #f8f9fa;
       border: 1px solid #dee2e6;
-      border-radius: 5px;
-      padding: 10px;
-      margin-top: 20px;
-      font-family: monospace;
-      font-size: 12px;
-      max-height: 300px;
-      overflow-y: auto;
-    }
-    .section {
-      margin: 20px 0;
+      border-radius: var(--border-radius);
       padding: 15px;
-      border: 1px solid #e0e0e0;
-      border-radius: 8px;
+      margin-top: 20px;
+      font-family: 'Courier New', Consolas, monospace;
+      font-size: 13px;
+      max-height: 400px;
+      overflow-y: auto;
+      line-height: 1.4;
     }
+
+    .section {
+      margin: 25px 0;
+      padding: 20px;
+      border: 1px solid var(--border-color);
+      border-radius: var(--border-radius);
+      background: #fafafa;
+      transition: all 0.3s ease;
+    }
+
+    .section:hover {
+      background: #f5f5f5;
+      border-color: var(--line-green);
+    }
+
     .section h3 {
       margin-top: 0;
       color: #333;
+      font-size: 1.3rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 10px;
     }
+
     .hidden {
       display: none;
+    }
+
+    .loading {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 3px solid #f3f3f3;
+      border-top: 3px solid var(--line-green);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-right: 10px;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .environment-info {
+      background: #e3f2fd;
+      border: 1px solid #2196f3;
+      border-radius: var(--border-radius);
+      padding: 15px;
+      margin: 15px 0;
+      font-size: 14px;
+    }
+
+    .button-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin: 15px 0;
+    }
+
+    @media (max-width: 600px) {
+      body {
+        padding: 10px;
+      }
+      
+      .container {
+        padding: 20px;
+      }
+      
+      h1 {
+        font-size: 1.5rem;
+      }
+      
+      .button-group {
+        flex-direction: column;
+      }
+      
+      button {
+        width: 100%;
+        margin: 5px 0;
+      }
+    }
+
+    /* 無障礙改善 */
+    button:focus {
+      outline: 2px solid var(--line-green);
+      outline-offset: 2px;
+    }
+
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>📷 LIFF 圖片選擇測試 (整合登入版)</h1>
+    <h1>📷 LIFF 圖片選擇應用程式</h1>
     
-    <div id="status-container"></div>
+    <div id="status-container" role="status" aria-live="polite"></div>
+    
+    <!-- 環境資訊 -->
+    <div id="environmentInfo" class="environment-info hidden">
+      <strong>🌐 環境資訊：</strong>
+      <span id="envDetails"></span>
+    </div>
     
     <!-- 登入區域 -->
     <div id="loginSection" class="section">
       <h3>🔑 LINE 登入</h3>
-      <button id="loginBtn" class="login-btn">🔑 使用 LINE 登入</button>
-      <div id="userInfo" class="hidden"></div>
+      <p>請先登入您的 LINE 帳號以使用圖片選擇功能</p>
+      <button id="loginBtn" class="login-btn" aria-describedby="loginHelp">
+        <span id="loginBtnText">🔑 使用 LINE 登入</span>
+      </button>
+      <div id="loginHelp" class="sr-only">點擊此按鈕將跳轉到 LINE 登入頁面</div>
+      <div id="userInfo" class="hidden" role="region" aria-label="用戶資訊"></div>
     </div>
     
     <!-- 功能區域 -->
     <div id="functionSection" class="section hidden">
       <h3>📷 圖片選擇功能</h3>
-      <button id="chooseBtn" onclick="chooseMedia()" disabled>選擇圖片</button>
-      <button onclick="checkLiffStatus()">檢查 LIFF 狀態</button>
-      <button onclick="logout()">登出</button>
-      <br><br>
-      <img id="preview" style="display:none;"/>
+      <p>選擇圖片來源：相機拍照或從相簿選擇</p>
+      <div class="button-group">
+        <button id="chooseBtn" onclick="chooseMedia()" disabled aria-describedby="chooseBtnHelp">
+          <span id="chooseBtnText">選擇圖片</span>
+        </button>
+        <button onclick="checkLiffStatus()" aria-describedby="statusHelp">檢查 LIFF 狀態</button>
+        <button onclick="logout()" aria-describedby="logoutHelp">登出</button>
+      </div>
+      <div id="chooseBtnHelp" class="sr-only">選擇圖片功能需要在 LINE 應用程式中使用</div>
+      <div id="statusHelp" class="sr-only">檢查 LIFF 應用程式的當前狀態</div>
+      <div id="logoutHelp" class="sr-only">登出當前的 LINE 帳號</div>
+      
+      <div id="imagePreview" role="region" aria-label="圖片預覽">
+        <img id="preview" style="display:none;" alt="選擇的圖片預覽" />
+      </div>
     </div>
     
     <!-- 除錯區域 -->
     <div class="section">
       <h3>🔧 除錯資訊</h3>
-      <button onclick="clearDebug()">清除除錯訊息</button>
-      <div id="debug"></div>
+      <p>技術人員可以查看詳細的除錯資訊</p>
+      <button onclick="clearDebug()" aria-describedby="clearHelp">清除除錯訊息</button>
+      <div id="clearHelp" class="sr-only">清除所有除錯訊息</div>
+      <div id="debug" role="log" aria-label="除錯訊息"></div>
     </div>
   </div>
 
   <script>
-    const liffId = "2007733246-nAexA2b9";
+    // 配置常數
+    const CONFIG = {
+      LIFF_ID: "2007733246-nAexA2b9",
+      MAX_STATUS_MESSAGES: 5,
+      DEBUG_MAX_HEIGHT: 400,
+      RETRY_ATTEMPTS: 3,
+      RETRY_DELAY: 1000
+    };
+
+    // 全域變數
     let liffReady = false;
     let userProfile = null;
+    let initRetryCount = 0;
     
+    // 工具函數
     function addStatus(message, type = 'info') {
       const container = document.getElementById('status-container');
       const div = document.createElement('div');
       div.className = `status ${type}`;
       div.textContent = message;
+      div.setAttribute('role', 'alert');
       container.appendChild(div);
       
-      // 自動移除舊的狀態訊息（保留最新5個）
+      // 自動移除舊的狀態訊息
       const statuses = container.querySelectorAll('.status');
-      if (statuses.length > 5) {
+      if (statuses.length > CONFIG.MAX_STATUS_MESSAGES) {
         container.removeChild(statuses[0]);
+      }
+      
+      // 自動隱藏成功訊息
+      if (type === 'success') {
+        setTimeout(() => {
+          if (div.parentNode) {
+            div.style.opacity = '0';
+            setTimeout(() => {
+              if (div.parentNode) {
+                div.parentNode.removeChild(div);
+              }
+            }, 300);
+          }
+        }, 5000);
       }
     }
     
     function addDebug(message) {
       const debug = document.getElementById('debug');
       const time = new Date().toLocaleTimeString();
-      debug.innerHTML += `[${time}] ${message}<br>`;
+      const logEntry = document.createElement('div');
+      logEntry.innerHTML = `<span style="color: #666;">[${time}]</span> ${message}`;
+      debug.appendChild(logEntry);
       debug.scrollTop = debug.scrollHeight;
-      console.log(message);
+      console.log(`[LIFF Debug] ${message}`);
     }
     
     function clearDebug() {
       document.getElementById('debug').innerHTML = '';
+      addDebug('除錯訊息已清除');
+    }
+    
+    function showLoading(elementId, show = true) {
+      const element = document.getElementById(elementId);
+      const textElement = document.getElementById(elementId + 'Text');
+      
+      if (show) {
+        element.disabled = true;
+        if (textElement) {
+          textElement.innerHTML = '<span class="loading"></span>處理中...';
+        }
+      } else {
+        element.disabled = false;
+        if (textElement) {
+          textElement.innerHTML = element.id === 'loginBtn' ? '🔑 使用 LINE 登入' : '📷 選擇圖片';
+        }
+      }
+    }
+    
+    function updateEnvironmentInfo() {
+      const envInfo = document.getElementById('environmentInfo');
+      const envDetails = document.getElementById('envDetails');
+      
+      if (typeof liff !== 'undefined' && liffReady) {
+        const isInClient = liff.isInClient();
+        const os = liff.getOS();
+        const version = liff.getVersion();
+        const language = liff.getLanguage();
+        
+        envDetails.innerHTML = `
+          執行環境: ${isInClient ? 'LINE 應用程式' : '外部瀏覽器'} | 
+          作業系統: ${os} | 
+          LIFF 版本: ${version} | 
+          語言: ${language}
+        `;
+        envInfo.classList.remove('hidden');
+      }
     }
     
     function updateUI() {
@@ -166,52 +482,72 @@
       const functionSection = document.getElementById('functionSection');
       const loginBtn = document.getElementById('loginBtn');
       const chooseBtn = document.getElementById('chooseBtn');
+      const chooseBtnText = document.getElementById('chooseBtnText');
       const userInfo = document.getElementById('userInfo');
       
-      if (liff.isLoggedIn() && userProfile) {
+      if (typeof liff !== 'undefined' && liff.isLoggedIn() && userProfile) {
         // 已登入狀態
         loginBtn.style.display = 'none';
         userInfo.className = '';
         userInfo.innerHTML = `
-          <p>✅ <strong>登入成功</strong></p>
-          <p><img src="${userProfile.pictureUrl}" width="50" height="50" />
-          <strong>歡迎：</strong>${userProfile.displayName}</p>
-          <p><strong>用戶ID：</strong>${userProfile.userId}</p>
+          <div style="display: flex; align-items: center; margin-bottom: 15px;">
+            <img src="${userProfile.pictureUrl}" width="60" height="60" alt="${userProfile.displayName} 的頭像" />
+            <div>
+              <h4 style="margin: 0; color: var(--line-green);">✅ 登入成功</h4>
+              <p style="margin: 5px 0;"><strong>歡迎：</strong>${userProfile.displayName}</p>
+              <p style="margin: 0; font-size: 0.9em; color: #666;"><strong>用戶ID：</strong>${userProfile.userId}</p>
+            </div>
+          </div>
         `;
-        functionSection.className = 'section';
+        functionSection.classList.remove('hidden');
         chooseBtn.disabled = !liffReady;
-        chooseBtn.textContent = liffReady ? '📷 選擇圖片' : '等待 LIFF 初始化...';
+        chooseBtnText.textContent = liffReady ? '📷 選擇圖片' : '等待 LIFF 初始化...';
+        
+        updateEnvironmentInfo();
       } else {
         // 未登入狀態
         loginBtn.style.display = 'inline-block';
-        userInfo.className = 'hidden';
-        functionSection.className = 'section hidden';
+        userInfo.classList.add('hidden');
+        functionSection.classList.add('hidden');
         chooseBtn.disabled = true;
       }
     }
 
-    async function main() {
+    async function initializeLiff(retryCount = 0) {
       try {
-        addDebug("🔄 開始初始化 LIFF...");
+        addDebug(`🔄 開始初始化 LIFF... (嘗試 ${retryCount + 1}/${CONFIG.RETRY_ATTEMPTS})`);
         addStatus("正在初始化 LIFF...", "info");
         
         // 檢查 LIFF SDK 是否載入
         if (typeof liff === 'undefined') {
-          throw new Error('LIFF SDK 未載入');
+          throw new Error('LIFF SDK 未載入，請檢查網路連線');
         }
         
         addDebug("✅ LIFF SDK 已載入");
         
         // 初始化 LIFF
-        await liff.init({ liffId });
+        await liff.init({ liffId: CONFIG.LIFF_ID });
         addDebug("✅ LIFF 初始化完成");
         addStatus("LIFF 初始化成功", "success");
 
         // 設定登入按鈕事件
-        document.getElementById('loginBtn').onclick = () => {
-          addDebug("🔄 開始 LINE 登入流程...");
-          addStatus("正在跳轉到 LINE 登入頁面...", "info");
-          liff.login();
+        document.getElementById('loginBtn').onclick = async () => {
+          try {
+            addDebug("🔄 開始 LINE 登入流程...");
+            addStatus("正在跳轉到 LINE 登入頁面...", "info");
+            showLoading('loginBtn', true);
+            
+            // 檢查是否在 LINE 客戶端中
+            if (!liff.isInClient()) {
+              addStatus("建議在 LINE 應用程式中開啟以獲得最佳登入體驗", "warning");
+            }
+            
+            liff.login();
+          } catch (error) {
+            addDebug(`❌ 登入過程發生錯誤: ${error.message}`);
+            addStatus("登入失敗，請重試", "error");
+            showLoading('loginBtn', false);
+          }
         };
 
         // 檢查登入狀態
@@ -229,12 +565,20 @@
             addStatus(`歡迎 ${userProfile.displayName}！`, "success");
           } catch (err) {
             addDebug(`⚠️ 無法獲取用戶資訊: ${err.message}`);
-            addStatus("無法獲取用戶資訊", "warning");
+            addStatus("無法獲取用戶資訊，但可以繼續使用", "warning");
           }
         }
         
-        // 檢查是否支援 chooseMedia
-        if (typeof liff.chooseMedia !== 'function') {
+        // 檢查功能支援
+        const features = {
+          chooseMedia: typeof liff.chooseMedia === 'function',
+          shareTargetPicker: typeof liff.shareTargetPicker === 'function',
+          scanCode: typeof liff.scanCode === 'function'
+        };
+        
+        addDebug(`📋 功能支援檢查: ${JSON.stringify(features)}`);
+        
+        if (!features.chooseMedia) {
           throw new Error('此版本的 LIFF 不支援 chooseMedia 功能');
         }
         
@@ -245,7 +589,7 @@
         addDebug(`📱 執行環境: ${isInClient ? 'LINE 應用程式內' : '外部瀏覽器'}`);
         
         if (!isInClient) {
-          addStatus("建議在 LINE 應用程式中開啟以獲得最佳體驗", "warning");
+          addStatus("建議在 LINE 應用程式中開啟以獲得完整功能", "warning");
         }
         
         liffReady = true;
@@ -255,9 +599,22 @@
           addStatus("LIFF 準備就緒，可以選擇圖片", "success");
         }
         
+        // 重置重試計數
+        initRetryCount = 0;
+        
       } catch (err) {
         addDebug(`❌ LIFF 初始化錯誤: ${err.message}`);
-        addStatus(`初始化失敗: ${err.message}`, "error");
+        
+        if (retryCount < CONFIG.RETRY_ATTEMPTS - 1) {
+          addStatus(`初始化失敗，${CONFIG.RETRY_DELAY/1000} 秒後重試...`, "warning");
+          setTimeout(() => {
+            initializeLiff(retryCount + 1);
+          }, CONFIG.RETRY_DELAY);
+        } else {
+          addStatus(`初始化失敗: ${err.message}`, "error");
+          addStatus("請檢查網路連線或重新整理頁面", "error");
+        }
+        
         console.error("LIFF 初始化錯誤", err);
       }
     }
@@ -276,10 +633,12 @@
       try {
         addDebug("🖼️ 開始選擇圖片...");
         addStatus("正在開啟圖片選擇器...", "info");
+        showLoading('chooseBtn', true);
         
         // 檢查是否在 LINE 客戶端中
         if (!liff.isInClient()) {
           addStatus("圖片選擇功能需要在 LINE 應用程式中使用", "warning");
+          showLoading('chooseBtn', false);
           return;
         }
         
@@ -289,7 +648,10 @@
           source: ['camera', 'gallery']
         });
 
-        addDebug(`📂 選擇結果: ${JSON.stringify(result)}`);
+        addDebug(`📂 選擇結果: ${JSON.stringify({
+          mediaCount: result?.media?.length || 0,
+          hasResult: !!result
+        })}`);
 
         if (result && result.media && result.media.length > 0) {
           const mediaItem = result.media[0];
@@ -300,6 +662,7 @@
             const img = document.getElementById("preview");
             img.src = e.target.result;
             img.style.display = "block";
+            img.alt = `選擇的圖片 - ${mediaItem.blob.type}, ${(mediaItem.blob.size/1024).toFixed(1)}KB`;
             addStatus("圖片載入成功", "success");
             addDebug("✅ 圖片預覽已顯示");
           };
@@ -319,27 +682,41 @@
         addStatus(`選擇圖片失敗: ${err.message}`, "error");
         console.error("選擇圖片失敗", err);
         
-        // 提供更詳細的錯誤資訊
+        // 提供更詳細的錯誤資訊和建議
         if (err.message.includes('Permission')) {
           addStatus("請檢查相機和儲存權限設定", "warning");
         } else if (err.message.includes('not supported')) {
           addStatus("您的裝置或瀏覽器不支援此功能", "warning");
+        } else if (err.message.includes('cancelled')) {
+          addStatus("用戶取消了圖片選擇", "info");
         }
+      } finally {
+        showLoading('chooseBtn', false);
       }
     }
     
     function logout() {
-      if (liff.isLoggedIn()) {
-        liff.logout();
-        userProfile = null;
-        addDebug("🔓 已登出 LINE");
-        addStatus("已登出 LINE 帳號", "info");
-        updateUI();
-        
-        // 清除圖片預覽
-        const preview = document.getElementById('preview');
-        preview.style.display = 'none';
-        preview.src = '';
+      if (typeof liff !== 'undefined' && liff.isLoggedIn()) {
+        try {
+          liff.logout();
+          userProfile = null;
+          liffReady = false;
+          addDebug("🔓 已登出 LINE");
+          addStatus("已登出 LINE 帳號", "info");
+          updateUI();
+          
+          // 清除圖片預覽
+          const preview = document.getElementById('preview');
+          preview.style.display = 'none';
+          preview.src = '';
+          
+          // 隱藏環境資訊
+          document.getElementById('environmentInfo').classList.add('hidden');
+          
+        } catch (error) {
+          addDebug(`❌ 登出過程發生錯誤: ${error.message}`);
+          addStatus("登出時發生錯誤", "error");
+        }
       }
     }
     
@@ -351,26 +728,60 @@
         return;
       }
       
-      const status = {
-        ready: liffReady,
-        loggedIn: liff.isLoggedIn ? liff.isLoggedIn() : false,
-        inClient: liff.isInClient ? liff.isInClient() : false,
-        chooseMediaSupported: typeof liff.chooseMedia === 'function',
-        userProfile: userProfile ? userProfile.displayName : null
-      };
-      
-      addDebug(`📊 LIFF 狀態: ${JSON.stringify(status, null, 2)}`);
-      
-      Object.entries(status).forEach(([key, value]) => {
-        const statusText = value ? '✅' : '❌';
-        addDebug(`${statusText} ${key}: ${value}`);
-      });
-      
-      addStatus("LIFF 狀態已輸出到除錯區域", "info");
+      try {
+        const status = {
+          ready: liffReady,
+          loggedIn: liff.isLoggedIn ? liff.isLoggedIn() : false,
+          inClient: liff.isInClient ? liff.isInClient() : false,
+          os: liff.getOS ? liff.getOS() : 'unknown',
+          version: liff.getVersion ? liff.getVersion() : 'unknown',
+          language: liff.getLanguage ? liff.getLanguage() : 'unknown',
+          features: {
+            chooseMedia: typeof liff.chooseMedia === 'function',
+            shareTargetPicker: typeof liff.shareTargetPicker === 'function',
+            scanCode: typeof liff.scanCode === 'function'
+          },
+          userProfile: userProfile ? {
+            displayName: userProfile.displayName,
+            userId: userProfile.userId.substring(0, 8) + '...' // 隱私保護
+          } : null
+        };
+        
+        addDebug(`📊 LIFF 完整狀態:`);
+        Object.entries(status).forEach(([key, value]) => {
+          if (typeof value === 'object') {
+            addDebug(`  ${key}: ${JSON.stringify(value, null, 2)}`);
+          } else {
+            const statusText = value ? '✅' : '❌';
+            addDebug(`  ${statusText} ${key}: ${value}`);
+          }
+        });
+        
+        addStatus("LIFF 狀態已輸出到除錯區域", "info");
+        
+      } catch (error) {
+        addDebug(`❌ 狀態檢查失敗: ${error.message}`);
+        addStatus("狀態檢查失敗", "error");
+      }
     }
 
     // 頁面載入完成後初始化
-    window.addEventListener('load', main);
+    window.addEventListener('load', () => {
+      addDebug("🚀 頁面載入完成，開始初始化...");
+      initializeLiff();
+    });
+    
+    // 錯誤處理
+    window.addEventListener('error', (event) => {
+      addDebug(`❌ 全域錯誤: ${event.error?.message || event.message}`);
+      console.error('Global error:', event.error);
+    });
+    
+    // 未處理的 Promise 拒絕
+    window.addEventListener('unhandledrejection', (event) => {
+      addDebug(`❌ 未處理的 Promise 拒絕: ${event.reason}`);
+      console.error('Unhandled promise rejection:', event.reason);
+    });
   </script>
 </body>
 </html>
