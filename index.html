@@ -1,108 +1,376 @@
-
 <!DOCTYPE html>
-<html dir="ltr" lang="zh_TW">
+<html lang="zh-TW">
 <head>
-      <script type="module" crossorigin src="https://static.line-scdn.net/line_web_login/edge/dist/assets/polyfills-DXtp5_sn.js"></script>
-
-
-  <meta charset="utf-8">
-  <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>LINE Login</title>
-
-  <meta property="og:title" content="LINE Login">
-  <meta property="og:description" content="登入cloth">
-  <meta property="og:image" content="https://vos.line-scdn.net/login-web/img/favicon.ico">
-  <link rel="shortcut icon" type="image/x-icon" href="https://vos.line-scdn.net/login-web/img/favicon.ico">
-  <link rel="icon" type="image/x-icon" sizes="32x32" href="https://vos.line-scdn.net/login-web/img/favicon-32x32.png">
-  <link rel="icon" type="image/x-icon" sizes="16x16" href="https://vos.line-scdn.net/login-web/img/favicon-16x16.png">
-
-  <link rel="apple-touch-icon-precomposed" href="https://vos.line-scdn.net/login-web/img/apple-touch-icon-precomposed.png">
-
-<script>/* analytics */
-(function(g,d){
-  var v='release/stable';
-  g._trmq=[];g._trm=function(){g._trmq.push(arguments)};
-  g.onerror=function(m,f,l,c){g._trm('send','exception',m,f,l,c)};
-  var h=location.protocol==='https:'?'https://d.line-scdn.net':'http://d.line-cdn.net';
-  var s=d.createElement('script');s.async=1;
-  s.src=h+'/n/_4/torimochi.js/public/v1/'+v+'/min/torimochi.js';
-  var t=d.getElementsByTagName('script')[0];t.parentNode.insertBefore(s,t);
-})(window, document);
-
-_trm('performance', { rate: 0.05 });
-_trm('enable', { productKey: "line-web-login-real" });
-/* /analytics */</script>
-
-<script type="text/javascript" charset="UTF-8" src="https://access.line.me/oauth2/v2.1/messages"></script>
-
-      <script type="module" crossorigin src="https://static.line-scdn.net/line_web_login/edge/dist/assets/index-DvjpmWXX.js"></script>
-    <link rel="modulepreload" crossorigin href="https://static.line-scdn.net/line_web_login/edge/dist/assets/modulepreload-polyfill-Dqv5PPZA.js">
-    <link rel="modulepreload" crossorigin href="https://static.line-scdn.net/line_web_login/edge/dist/assets/common-Dd2EcrY2.js">
-    <link rel="modulepreload" crossorigin href="https://static.line-scdn.net/line_web_login/edge/dist/assets/Constant-DvWA3Li3.js">
-    <link rel="modulepreload" crossorigin href="https://static.line-scdn.net/line_web_login/edge/dist/assets/_commonjsHelpers-MdiGH4nz.js">
-    <link rel="modulepreload" crossorigin href="https://static.line-scdn.net/line_web_login/edge/dist/assets/createLayoutWrapper-Bcrn63iq.js">
-    <link rel="modulepreload" crossorigin href="https://static.line-scdn.net/line_web_login/edge/dist/assets/cPinCode-CG6Lx6XV.js">
-    <link rel="modulepreload" crossorigin href="https://static.line-scdn.net/line_web_login/edge/dist/assets/createRouter-BvkeISuu.js">
-    <link rel="modulepreload" crossorigin href="https://static.line-scdn.net/line_web_login/edge/dist/assets/OverlayMixin-jZEHrJoL.js">
-    <link rel="modulepreload" crossorigin href="https://static.line-scdn.net/line_web_login/edge/dist/assets/ldsg-popup-CdC0cCLK.js">
-    <link rel="modulepreload" crossorigin href="https://static.line-scdn.net/line_web_login/edge/dist/assets/ldsm-text-button-C33skrvi.js">
-    <link rel="modulepreload" crossorigin href="https://static.line-scdn.net/line_web_login/edge/dist/assets/_getPrototype-DC1EnnMy.js">
-    <link rel="modulepreload" crossorigin href="https://static.line-scdn.net/line_web_login/edge/dist/assets/lFooter01-CHrN8iQL.js">
-    <link rel="modulepreload" crossorigin href="https://static.line-scdn.net/line_web_login/edge/dist/assets/axiosPlugin-DSv1GksT.js">
-    <link rel="modulepreload" crossorigin href="https://static.line-scdn.net/line_web_login/edge/dist/assets/uaPlugin-B5rBq2VH.js">
-    <link rel="modulepreload" crossorigin href="https://static.line-scdn.net/line_web_login/edge/dist/assets/darkModePlugin-D6cUWaD6.js">
-    <link rel="stylesheet" href="https://static.line-scdn.net/line_web_login/edge/dist/assets/common-Xsu5maJP.css">
-    <link rel="stylesheet" href="https://static.line-scdn.net/line_web_login/edge/dist/assets/cPinCode-GXH-KACv.css">
-    <link rel="stylesheet" href="https://static.line-scdn.net/line_web_login/edge/dist/assets/ldsm-text-button-BXS5hqXD.css">
-    <link rel="stylesheet" href="https://static.line-scdn.net/line_web_login/edge/dist/assets/ldsm-semantic-dark-mode-8-gBXRYH.css">
-    <link rel="stylesheet" href="https://static.line-scdn.net/line_web_login/edge/dist/assets/lFooter01-1Nnu-4mf.css">
-    <link rel="stylesheet" href="https://static.line-scdn.net/line_web_login/edge/dist/assets/index-BzE6yBlA.css">
-    <link rel="stylesheet" href="https://static.line-scdn.net/line_web_login/edge/dist/assets/ldsm-semantic-dark-mode-8-gBXRYH.css">
-    <link rel="stylesheet" href="https://static.line-scdn.net/line_web_login/edge/dist/assets/main-Dki7GDmp.css">
-
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LIFF 圖片選擇測試 (整合登入版)</title>
+  <script src="https://static.line-scdn.net/liff/edge/2.27.0/sdk.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      max-width: 600px;
+      margin: 0 auto;
+      background-color: #f8f9fa;
+    }
+    .container {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    .status {
+      padding: 10px;
+      margin: 10px 0;
+      border-radius: 5px;
+      font-weight: bold;
+    }
+    .success { background-color: #d4edda; color: #155724; }
+    .error { background-color: #f8d7da; color: #721c24; }
+    .warning { background-color: #fff3cd; color: #856404; }
+    .info { background-color: #d1ecf1; color: #0c5460; }
+    button {
+      padding: 12px 24px;
+      font-size: 16px;
+      background-color: #00C300;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      margin: 10px 5px;
+      transition: background-color 0.3s;
+    }
+    button:disabled {
+      background-color: #ccc;
+      cursor: not-allowed;
+    }
+    button:hover:not(:disabled) {
+      background-color: #00A300;
+    }
+    .login-btn {
+      background-color: #06C755;
+      font-size: 18px;
+      padding: 15px 30px;
+    }
+    .login-btn:hover {
+      background-color: #05B04A;
+    }
+    #userInfo {
+      background-color: #e8f5e8;
+      padding: 15px;
+      border-radius: 8px;
+      margin: 15px 0;
+      border-left: 4px solid #00C300;
+    }
+    #userInfo img {
+      border-radius: 50%;
+      margin-right: 10px;
+      vertical-align: middle;
+    }
+    #preview {
+      max-width: 100%;
+      border: 2px solid #ddd;
+      border-radius: 5px;
+      margin-top: 10px;
+    }
+    #debug {
+      background-color: #f8f9fa;
+      border: 1px solid #dee2e6;
+      border-radius: 5px;
+      padding: 10px;
+      margin-top: 20px;
+      font-family: monospace;
+      font-size: 12px;
+      max-height: 300px;
+      overflow-y: auto;
+    }
+    .section {
+      margin: 20px 0;
+      padding: 15px;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+    }
+    .section h3 {
+      margin-top: 0;
+      color: #333;
+    }
+    .hidden {
+      display: none;
+    }
+  </style>
 </head>
-
-<body ontouchstart="">
-<noscript>
-  <div class="LyWrap">
-    <!--CONTENTS-AREA-->
-    <div class="LyContents" role="main">
-      <div class="lyContentsInner">
-        <div class="MdBox01">
-          <section class="mdBox01Inner MdLYR03Error">
-            <div class="MdLogo01 mdLogo01P01">
-              <h1 class="mdLogo01Img">LINE</h1>
-            </div>
-            <h2 class="mdLYR03Title mdMN10Title">
-              <span class="mdLYR03Icon MdIco01Alert">alert</span>
-              <span>JavaScript錯誤</span>
-            </h2>
-            <p class="mdLYR03Desc mdMN10Desc">
-              您尚未在瀏覽器中啟用JavaScript。<br />
-請先啟用JavaScript，才可使用本網站提供的功能。            </p>
-          </section>
-        </div>
-      </div>
+<body>
+  <div class="container">
+    <h1>📷 LIFF 圖片選擇測試 (整合登入版)</h1>
+    
+    <div id="status-container"></div>
+    
+    <!-- 登入區域 -->
+    <div id="loginSection" class="section">
+      <h3>🔑 LINE 登入</h3>
+      <button id="loginBtn" class="login-btn">🔑 使用 LINE 登入</button>
+      <div id="userInfo" class="hidden"></div>
+    </div>
+    
+    <!-- 功能區域 -->
+    <div id="functionSection" class="section hidden">
+      <h3>📷 圖片選擇功能</h3>
+      <button id="chooseBtn" onclick="chooseMedia()" disabled>選擇圖片</button>
+      <button onclick="checkLiffStatus()">檢查 LIFF 狀態</button>
+      <button onclick="logout()">登出</button>
+      <br><br>
+      <img id="preview" style="display:none;"/>
+    </div>
+    
+    <!-- 除錯區域 -->
+    <div class="section">
+      <h3>🔧 除錯資訊</h3>
+      <button onclick="clearDebug()">清除除錯訊息</button>
+      <div id="debug"></div>
     </div>
   </div>
-</noscript>
 
-<div id="__layout">
-  <div class="LyBody" id="app">
-    <app app-data="{&quot;props&quot;:{&quot;channel-id&quot;:2007733246,&quot;is-error&quot;:false,&quot;is-captcha&quot;:false,&quot;captcha-url&quot;:&quot;/dialog/captcha/BzmBMrV3oqSxZY3BxjhAFNzTYqFT4XX0b3qoeG6x6Tc&quot;,&quot;is-recaptcha&quot;:false,&quot;recaptcha-key&quot;:&quot;6LdXvWEbAAAAANgA_K7oaUt_EtHee2RK1x0LJK3e&quot;,&quot;recaptcha-action&quot;:&quot;login_v21&quot;,&quot;line-rsa-url&quot;:&quot;/authct/v1/keys/line&quot;,&quot;pincode-url&quot;:&quot;/pincode&quot;,&quot;open-authentication-session-url&quot;:&quot;/oauth2/v2.1/authn/session&quot;,&quot;open-authn-session-api-url&quot;:&quot;/oauth2/v2.1/authn/session&quot;,&quot;issue-line-enc-key-api-url&quot;:&quot;/oauth2/v2.1/authn/keys/line&quot;,&quot;wait-pin-code-verification-api-url&quot;:&quot;/qrlogin/oauth2/v2.1/authn/pin/wait&quot;,&quot;qr-code-url&quot;:&quot;/qrlogin/v1/session&quot;,&quot;wait-qr-code-verification-complete-url&quot;:&quot;/qrlogin/v1/qr/wait&quot;,&quot;wait-pin-code-verification-complete-url&quot;:&quot;/qrlogin/v1/pin/wait&quot;,&quot;enable-continue-without-login&quot;:false,&quot;switch-amr&quot;:true,&quot;login-retry-page-url&quot;:&quot;/oauth2/v2.1/noauto-login?returnUri=%2Foauth2%2Fv2.1%2Fauthorize%2Fconsent%3Fapp_id%3D2007733246-nAexA2b9%26client_id%3D2007733246%26scope%3Dchat_message.write%2520openid%2520profile%26state%3DUM8zTlxJXqS5%26response_type%3Dcode%26code_challenge_method%3DS256%26code_challenge%3Do1afJuZ4Honmr6P6pj2b4CPENO65kw9BXm7ExV1uaqI%26liff_sdk_version%3D2.27.0%26type%3DL%26redirect_uri%3Dhttps%253A%252F%252F24557150.github.io%252Fliff-test%252F%26bot_prompt%3Dnormal&amp;loginChannelId=2007733246&amp;switch_amr=true&amp;reqId=c9KswYFVQUKJleV70mYzA0&quot;,&quot;authorize-page-url&quot;:&quot;/oauth2/v2.1/authenticate&quot;,&quot;return-uri&quot;:&quot;/oauth2/v2.1/authorize/consent?app_id=2007733246-nAexA2b9&amp;client_id=2007733246&amp;scope=chat_message.write%20openid%20profile&amp;state=UM8zTlxJXqS5&amp;response_type=code&amp;code_challenge_method=S256&amp;code_challenge=o1afJuZ4Honmr6P6pj2b4CPENO65kw9BXm7ExV1uaqI&amp;liff_sdk_version=2.27.0&amp;type=L&amp;redirect_uri=https%3A%2F%2F24557150.github.io%2Fliff-test%2F&amp;bot_prompt=normal&quot;,&quot;auto-login-fallback-url&quot;:&quot;https://access-auto.line.me/oauth2/v2.1/login?returnUri=%2Foauth2%2Fv2.1%2Fauthorize%2Fconsent%3Fapp_id%3D2007733246-nAexA2b9%26client_id%3D2007733246%26scope%3Dchat_message.write%2520openid%2520profile%26state%3DUM8zTlxJXqS5%26response_type%3Dcode%26code_challenge_method%3DS256%26code_challenge%3Do1afJuZ4Honmr6P6pj2b4CPENO65kw9BXm7ExV1uaqI%26liff_sdk_version%3D2.27.0%26type%3DL%26redirect_uri%3Dhttps%253A%252F%252F24557150.github.io%252Fliff-test%252F%26bot_prompt%3Dnormal&amp;loginChannelId=2007733246&amp;loginState=KXsAy7tYJdDo8OkSUuZGRS&quot;},&quot;slots&quot;:{&quot;serverside_field&quot;:[{&quot;type&quot;:&quot;hidden&quot;,&quot;name&quot;:&quot;loginChannelId&quot;,&quot;value&quot;:&quot;2007733246&quot;},{&quot;type&quot;:&quot;hidden&quot;,&quot;name&quot;:&quot;returnUri&quot;,&quot;value&quot;:&quot;/oauth2/v2.1/authorize/consent?app_id=2007733246-nAexA2b9&amp;client_id=2007733246&amp;scope=chat_message.write%20openid%20profile&amp;state=UM8zTlxJXqS5&amp;response_type=code&amp;code_challenge_method=S256&amp;code_challenge=o1afJuZ4Honmr6P6pj2b4CPENO65kw9BXm7ExV1uaqI&amp;liff_sdk_version=2.27.0&amp;type=L&amp;redirect_uri=https%3A%2F%2F24557150.github.io%2Fliff-test%2F&amp;bot_prompt=normal&quot;},{&quot;type&quot;:&quot;hidden&quot;,&quot;name&quot;:&quot;displayType&quot;,&quot;value&quot;:&quot;b&quot;},{&quot;type&quot;:&quot;hidden&quot;,&quot;name&quot;:&quot;captchaKey&quot;,&quot;value&quot;:&quot;BzmBMrV3oqSxZY3BxjhAFNzTYqFT4XX0b3qoeG6x6Tc&quot;},{&quot;type&quot;:&quot;hidden&quot;,&quot;name&quot;:&quot;__csrf&quot;,&quot;value&quot;:&quot;NmgMxbvDkOtnBjjL0pSkI4&quot;,&quot;id&quot;:&quot;__csrf&quot;},{&quot;type&quot;:&quot;hidden&quot;,&quot;name&quot;:&quot;lang&quot;,&quot;value&quot;:&quot;zh_TW&quot;}],&quot;serverside_redirect_query&quot;:[{&quot;type&quot;:&quot;hidden&quot;,&quot;name&quot;:&quot;loginChannelId&quot;,&quot;value&quot;:&quot;2007733246&quot;},{&quot;type&quot;:&quot;hidden&quot;,&quot;name&quot;:&quot;returnUri&quot;,&quot;value&quot;:&quot;/oauth2/v2.1/authorize/consent?app_id=2007733246-nAexA2b9&amp;client_id=2007733246&amp;scope=chat_message.write%20openid%20profile&amp;state=UM8zTlxJXqS5&amp;response_type=code&amp;code_challenge_method=S256&amp;code_challenge=o1afJuZ4Honmr6P6pj2b4CPENO65kw9BXm7ExV1uaqI&amp;liff_sdk_version=2.27.0&amp;type=L&amp;redirect_uri=https%3A%2F%2F24557150.github.io%2Fliff-test%2F&amp;bot_prompt=normal&quot;},{&quot;type&quot;:&quot;hidden&quot;,&quot;name&quot;:&quot;__csrf&quot;,&quot;value&quot;:&quot;NmgMxbvDkOtnBjjL0pSkI4&quot;,&quot;id&quot;:&quot;__csrf&quot;}]}}" />
-  </div>
+  <script>
+    const liffId = "2007733246-nAexA2b9";
+    let liffReady = false;
+    let userProfile = null;
+    
+    function addStatus(message, type = 'info') {
+      const container = document.getElementById('status-container');
+      const div = document.createElement('div');
+      div.className = `status ${type}`;
+      div.textContent = message;
+      container.appendChild(div);
+      
+      // 自動移除舊的狀態訊息（保留最新5個）
+      const statuses = container.querySelectorAll('.status');
+      if (statuses.length > 5) {
+        container.removeChild(statuses[0]);
+      }
+    }
+    
+    function addDebug(message) {
+      const debug = document.getElementById('debug');
+      const time = new Date().toLocaleTimeString();
+      debug.innerHTML += `[${time}] ${message}<br>`;
+      debug.scrollTop = debug.scrollHeight;
+      console.log(message);
+    }
+    
+    function clearDebug() {
+      document.getElementById('debug').innerHTML = '';
+    }
+    
+    function updateUI() {
+      const loginSection = document.getElementById('loginSection');
+      const functionSection = document.getElementById('functionSection');
+      const loginBtn = document.getElementById('loginBtn');
+      const chooseBtn = document.getElementById('chooseBtn');
+      const userInfo = document.getElementById('userInfo');
+      
+      if (liff.isLoggedIn() && userProfile) {
+        // 已登入狀態
+        loginBtn.style.display = 'none';
+        userInfo.className = '';
+        userInfo.innerHTML = `
+          <p>✅ <strong>登入成功</strong></p>
+          <p><img src="${userProfile.pictureUrl}" width="50" height="50" />
+          <strong>歡迎：</strong>${userProfile.displayName}</p>
+          <p><strong>用戶ID：</strong>${userProfile.userId}</p>
+        `;
+        functionSection.className = 'section';
+        chooseBtn.disabled = !liffReady;
+        chooseBtn.textContent = liffReady ? '📷 選擇圖片' : '等待 LIFF 初始化...';
+      } else {
+        // 未登入狀態
+        loginBtn.style.display = 'inline-block';
+        userInfo.className = 'hidden';
+        functionSection.className = 'section hidden';
+        chooseBtn.disabled = true;
+      }
+    }
 
-  <script src="https://static.line-scdn.net/line_web_login/1980c203b61/dist/lc_common.js"></script>
-</div>
+    async function main() {
+      try {
+        addDebug("🔄 開始初始化 LIFF...");
+        addStatus("正在初始化 LIFF...", "info");
+        
+        // 檢查 LIFF SDK 是否載入
+        if (typeof liff === 'undefined') {
+          throw new Error('LIFF SDK 未載入');
+        }
+        
+        addDebug("✅ LIFF SDK 已載入");
+        
+        // 初始化 LIFF
+        await liff.init({ liffId });
+        addDebug("✅ LIFF 初始化完成");
+        addStatus("LIFF 初始化成功", "success");
 
-<script>
-  var lap_optout_check_api_url = "https://optout-api.tr.line.me/enabled";
-</script>
+        // 設定登入按鈕事件
+        document.getElementById('loginBtn').onclick = () => {
+          addDebug("🔄 開始 LINE 登入流程...");
+          addStatus("正在跳轉到 LINE 登入頁面...", "info");
+          liff.login();
+        };
 
-<script src="https://static.line-scdn.net/line_web_login/1980c203b61/dist/lap_optout_check.min.js"></script>
+        // 檢查登入狀態
+        if (!liff.isLoggedIn()) {
+          addDebug("🔒 尚未登入 LINE");
+          addStatus("請點擊按鈕登入 LINE 帳號", "warning");
+        } else {
+          addDebug("✅ 已登入 LIFF");
+          addStatus("已登入 LINE 帳號", "success");
+          
+          // 獲取用戶資訊
+          try {
+            userProfile = await liff.getProfile();
+            addDebug(`👤 用戶資訊: ${userProfile.displayName} (${userProfile.userId})`);
+            addStatus(`歡迎 ${userProfile.displayName}！`, "success");
+          } catch (err) {
+            addDebug(`⚠️ 無法獲取用戶資訊: ${err.message}`);
+            addStatus("無法獲取用戶資訊", "warning");
+          }
+        }
+        
+        // 檢查是否支援 chooseMedia
+        if (typeof liff.chooseMedia !== 'function') {
+          throw new Error('此版本的 LIFF 不支援 chooseMedia 功能');
+        }
+        
+        addDebug("✅ chooseMedia 功能可用");
+        
+        // 檢查執行環境
+        const isInClient = liff.isInClient();
+        addDebug(`📱 執行環境: ${isInClient ? 'LINE 應用程式內' : '外部瀏覽器'}`);
+        
+        if (!isInClient) {
+          addStatus("建議在 LINE 應用程式中開啟以獲得最佳體驗", "warning");
+        }
+        
+        liffReady = true;
+        updateUI();
+        
+        if (liff.isLoggedIn()) {
+          addStatus("LIFF 準備就緒，可以選擇圖片", "success");
+        }
+        
+      } catch (err) {
+        addDebug(`❌ LIFF 初始化錯誤: ${err.message}`);
+        addStatus(`初始化失敗: ${err.message}`, "error");
+        console.error("LIFF 初始化錯誤", err);
+      }
+    }
 
+    async function chooseMedia() {
+      if (!liffReady) {
+        addStatus("LIFF 尚未準備就緒", "error");
+        return;
+      }
+      
+      if (!liff.isLoggedIn()) {
+        addStatus("請先登入 LINE 帳號", "error");
+        return;
+      }
+      
+      try {
+        addDebug("🖼️ 開始選擇圖片...");
+        addStatus("正在開啟圖片選擇器...", "info");
+        
+        // 檢查是否在 LINE 客戶端中
+        if (!liff.isInClient()) {
+          addStatus("圖片選擇功能需要在 LINE 應用程式中使用", "warning");
+          return;
+        }
+        
+        const result = await liff.chooseMedia({
+          count: 1,
+          mediaType: 'image',
+          source: ['camera', 'gallery']
+        });
 
+        addDebug(`📂 選擇結果: ${JSON.stringify(result)}`);
 
+        if (result && result.media && result.media.length > 0) {
+          const mediaItem = result.media[0];
+          addDebug(`📷 圖片資訊: 大小=${mediaItem.blob.size} bytes, 類型=${mediaItem.blob.type}`);
+          
+          const reader = new FileReader();
+          reader.onload = function (e) {
+            const img = document.getElementById("preview");
+            img.src = e.target.result;
+            img.style.display = "block";
+            addStatus("圖片載入成功", "success");
+            addDebug("✅ 圖片預覽已顯示");
+          };
+          
+          reader.onerror = function() {
+            addStatus("圖片讀取失敗", "error");
+            addDebug("❌ FileReader 錯誤");
+          };
+          
+          reader.readAsDataURL(mediaItem.blob);
+        } else {
+          addStatus("未選擇任何圖片", "warning");
+          addDebug("⚠️ 沒有選擇圖片或結果為空");
+        }
+      } catch (err) {
+        addDebug(`❌ 選擇圖片失敗: ${err.message}`);
+        addStatus(`選擇圖片失敗: ${err.message}`, "error");
+        console.error("選擇圖片失敗", err);
+        
+        // 提供更詳細的錯誤資訊
+        if (err.message.includes('Permission')) {
+          addStatus("請檢查相機和儲存權限設定", "warning");
+        } else if (err.message.includes('not supported')) {
+          addStatus("您的裝置或瀏覽器不支援此功能", "warning");
+        }
+      }
+    }
+    
+    function logout() {
+      if (liff.isLoggedIn()) {
+        liff.logout();
+        userProfile = null;
+        addDebug("🔓 已登出 LINE");
+        addStatus("已登出 LINE 帳號", "info");
+        updateUI();
+        
+        // 清除圖片預覽
+        const preview = document.getElementById('preview');
+        preview.style.display = 'none';
+        preview.src = '';
+      }
+    }
+    
+    function checkLiffStatus() {
+      addDebug("🔍 檢查 LIFF 狀態...");
+      
+      if (typeof liff === 'undefined') {
+        addStatus("LIFF SDK 未載入", "error");
+        return;
+      }
+      
+      const status = {
+        ready: liffReady,
+        loggedIn: liff.isLoggedIn ? liff.isLoggedIn() : false,
+        inClient: liff.isInClient ? liff.isInClient() : false,
+        chooseMediaSupported: typeof liff.chooseMedia === 'function',
+        userProfile: userProfile ? userProfile.displayName : null
+      };
+      
+      addDebug(`📊 LIFF 狀態: ${JSON.stringify(status, null, 2)}`);
+      
+      Object.entries(status).forEach(([key, value]) => {
+        const statusText = value ? '✅' : '❌';
+        addDebug(`${statusText} ${key}: ${value}`);
+      });
+      
+      addStatus("LIFF 狀態已輸出到除錯區域", "info");
+    }
+
+    // 頁面載入完成後初始化
+    window.addEventListener('load', main);
+  </script>
 </body>
 </html>
