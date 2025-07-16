@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>衣櫃圖片上傳</title>
+</head>
+<body>
+    <h1>上傳你的衣櫃圖片</h1>
+
+    <form id="upload-form">
+        <input type="file" accept="image/*" capture="environment" id="image-input" required />
+        <select id="category-select">
+            <option value="top">上衣</option>
+            <option value="bottom">下身</option>
+            <option value="shoes">鞋子</option>
+        </select>
+        <button type="submit">上傳</button>
+    </form>
+
+    <div id="preview"></div>
+    <div id="status"></div>
+
+    <script src="https://static.line-scdn.net/liff/edge/2.1/sdk.js"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            liff.init({ liffId: "{{ liff_id }}" })
+                .then(() => {
+                    if (!liff.isLoggedIn()) {
+                        liff.login();
+                    }
+                });
+
+            const form = document.getElementById('upload-form');
+            const imageInput = document.getElementById('image-input');
+            const categorySelect = document.getElementById('category-select');
+            const statusDiv = document.getElementById('status');
+            const previewDiv = document.getElementById('preview');
+
+            form.addEventListener('submit', function (e) {
+                e.preventDefault();
+
+                const file = imageInput.files[0];
+                if (!file) {
+                    statusDiv.innerText = '請選擇一張圖片';
+                    return;
+                }
+
+                liff.getProfile().then(profile => {
+                    const userId = profile.userId;
+
+                    const formData = new FormData();
+                    formData.append('userId', userId);
+                    formData.append('category', categorySelect.value);
+                    formData.append('image', file);
+
+                    fetch('/upload_closet/', {
+                        method: 'POST',
+                        body: formData
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.status === 'ok') {
+                            statusDiv.innerText = '圖片上傳成功！';
+                            const img = document.createElement('img');
+                            img.src = URL.createObjectURL(file);
+                            img.style.maxWidth = '200px';
+                            previewDiv.innerHTML = '';
+                            previewDiv.appendChild(img);
+                        } else {
+                            statusDiv.innerText = '上傳失敗：' + data.error;
+                        }
+                    })
+                    .catch(err => {
+                        console.error(err);
+                        statusDiv.innerText = '上傳失敗，請稍後再試。';
+                    });
+
+                }).catch(err => {
+                    statusDiv.innerText = '取得使用者資料失敗';
+                });
+            });
+        });
+    </script>
+</body>
+</html>
