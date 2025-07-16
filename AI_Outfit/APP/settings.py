@@ -135,4 +135,4 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
-LIFF_ID = "2007741127-ezglqWAl" 
+LIFF_ID = "2007733246-nAexA2b9" 
