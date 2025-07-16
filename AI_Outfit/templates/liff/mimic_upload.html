@@ -1,0 +1,44 @@
+<!-- templates/liff/mimic_upload.html -->
+{% load static %}
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <title>👗 模仿穿搭圖片上傳</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <script src="{% static 'js/liff-init.js' %}"></script>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+  <div class="container py-5 text-center">
+    <h3 class="mb-4">📷 上傳你想模仿的穿搭圖片</h3>
+    <input type="file" id="mimicInput" class="form-control mb-3">
+    <button class="btn btn-primary" onclick="uploadMimic()">上傳圖片</button>
+  </div>
+
+  <script>
+    async function uploadMimic() {
+      const userId = await initLiffAndGetUserId("{{ liff_id }}");  // 共用初始化
+      const file = document.getElementById("mimicInput").files[0];
+      if (!file) return alert("請選擇圖片");
+
+      const formData = new FormData();
+      formData.append("userId", userId);
+      formData.append("image", file);
+
+      const res = await fetch("/outfit/upload/mimic", {
+        method: "POST",
+        body: formData
+      });
+
+      if (res.ok) {
+        alert("✅ 上傳成功，等待推薦結果...");
+        window.location.href = "/liff/recommend?userId=" + userId;
+      } else {
+        alert("❌ 上傳失敗！");
+      }
+    }
+  </script>
+</body>
+</html>

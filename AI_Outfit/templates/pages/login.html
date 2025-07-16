@@ -1,0 +1,36 @@
+<html lang="en">
+{% load static %}
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login Page</title>
+    <link rel="stylesheet" href="{% static "styles/style.css" %}">
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://unpkg.com/three@0.159.0/build/three.module.js",
+            "three/addons/": "https://unpkg.com/three@0.159.0/examples/jsm/"
+        }
+    }
+    </script>
+</head>
+<body>
+    <div id="login-container">
+        <img src="{% static "images/logo.jpg" %}" alt="Company Logo" id="logo">
+        <h2>Login</h2>
+        <form id="loginForm">
+            <div class="input-group">
+                <label for="username">Username</label>
+                <input type="text" id="username" name="username" required>
+            </div>
+            <div class="input-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" required>
+            </div>
+            <button type="submit" id="loginButton">Login</button>
+        </form>
+        <p id="message"></p>
+    </div>
+    <script src="{% static "scripts/script.js" %}" type="module"></script>
+</body>
+</html>
