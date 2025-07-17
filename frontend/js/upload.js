@@ -1,3 +1,4 @@
+// upload.js
 let selectedFiles = [];
 let images = [];
 let idCounter = 0;
@@ -45,18 +46,47 @@ export async function openImageSourceSelector() {
 
 window.openImageSourceSelector = openImageSourceSelector;
 
-window.uploadImages = function () {
+window.uploadImages = async function () {
   if (selectedFiles.length === 0) {
     alert('請先選擇圖片');
     return;
   }
+
   const category = document.getElementById('category-select').value;
-  selectedFiles.forEach(file => {
-    const url = URL.createObjectURL(file);
-    images.push({ id: idCounter++, file, category, url, selected: false });
-  });
-  status.innerText = `已新增 ${selectedFiles.length} 張圖片到分類「${category}」`;
+  const userId = localStorage.getItem('user_id');
+
+  if (!userId) {
+    alert('尚未登入，請重新登入');
+    return;
+  }
+
+  for (const file of selectedFiles) {
+    const formData = new FormData();
+    formData.append('image', file);
+    formData.append('category', category);
+    formData.append('user_id', userId);
+
+    try {
+      const res = await fetch('/upload', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const result = await res.json();
+      if (result.status === 'ok') {
+        const url = `/static/uploads/${userId}/${category}/${result.filename}`;
+        images.push({ id: idCounter++, file, category, url, selected: false });
+      } else {
+        console.error('後端錯誤:', result.message);
+      }
+    } catch (err) {
+      console.error('上傳失敗:', err);
+    }
+  }
+
+  status.innerText = `已成功上傳 ${selectedFiles.length} 張圖片到分類「${category}」`;
   fileInput.value = '';
+  selectedFiles = [];
   renderGallery();
 };
 
@@ -91,8 +121,8 @@ function renderGallery() {
 
     const imgEl = document.createElement('img');
     imgEl.src = img.url;
-    imgEl.alt = img.file.name;
-    imgEl.title = `${img.file.name} (${img.category})`;
+    imgEl.alt = img.file?.name || '上傳圖片';
+    imgEl.title = `${img.file?.name || '圖片'} (${img.category})`;
 
     const checkbox = document.createElement('input');
     checkbox.type = 'checkbox';
@@ -103,4 +133,23 @@ function renderGallery() {
     wrapper.appendChild(checkbox);
     gallery.appendChild(wrapper);
   });
+}
+
+// 載入後端已有圖片
+window.loadWardrobe = async function (userId, category = 'all') {
+  try {
+    const res = await fetch(`/wardrobe?user_id=${userId}&category=${category}`);
+    const data = await res.json();
+
+    images = data.map(item => ({
+      id: idCounter++,
+      file: null,
+      category: item.category,
+      url: item.url,
+      selected: false,
+    }));
+    renderGallery();
+  } catch (err) {
+    console.error('載入 wardrobe 失敗:', err);
+  }
 }
