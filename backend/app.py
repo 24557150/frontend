@@ -3,6 +3,11 @@ import os
 import sqlite3
 from werkzeug.utils import secure_filename
 
+from flask_cors import CORS
+app = Flask(__name__)
+CORS(app)
+
+
 # === 基本設定 ===
 app = Flask(__name__)
 UPLOAD_FOLDER = os.path.join("static", "uploads")
