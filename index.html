@@ -13,6 +13,7 @@
     <!-- 選擇圖片 -->
     <div>
       <input type="file" id="file-input" accept="image/*" multiple style="display:none;" />
+      <!-- ✅ 這個保留 onclick，因為已在 JS 綁定 window.openImageSourceSelector -->
       <button type="button" onclick="openImageSourceSelector()">📷 選擇圖片 (本機 / LINE 拍照/相簿)</button>
     </div>
 
@@ -22,24 +23,22 @@
       <option value="bottom">下身</option>
       <option value="shoes">鞋子</option>
     </select>
-    <button type="button" onclick="uploadImages()" style="margin-left: 10px;">上傳</button>
+    <!-- ✅ 改成 id，讓 JS 綁定 -->
+    <button id="upload-button" type="button" style="margin-left: 10px;">上傳</button>
 
     <!-- 狀態 -->
     <div id="status" style="margin-top: 10px; font-weight: bold;"></div>
 
     <hr>
 
-   <!-- ✅ 改這裡：加上 id -->
-<button id="upload-button" style="margin-left: 10px;">上傳</button>
-
-<div class="category-buttons" style="margin-bottom: 10px;">
-  <!-- ✅ 加上 id -->
-  <button id="all-button">全部</button>
-  <button id="top-button">只看上衣</button>
-  <button id="bottom-button">只看下身</button>
-  <button id="shoes-button">只看鞋子</button>
-  <button id="delete-button">刪除選取圖片</button>
-</div>
+    <!-- 分類篩選 + 刪除 -->
+    <div class="category-buttons" style="margin-bottom: 10px;">
+      <button id="all-button">全部</button>
+      <button id="top-button">只看上衣</button>
+      <button id="bottom-button">只看下身</button>
+      <button id="shoes-button">只看鞋子</button>
+      <button id="delete-button">刪除選取圖片</button>
+    </div>
 
     <!-- 圖片預覽區 -->
     <div id="closet-gallery"></div>
@@ -47,6 +46,7 @@
 
   <!-- LIFF SDK + 程式邏輯 -->
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <!-- ✅ type="module" 模組化寫法 -->
   <script type="module" src="frontend/js/liff-init.js"></script>
   <script type="module" src="frontend/js/upload.js"></script>
 </body>
