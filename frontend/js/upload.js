@@ -1,4 +1,3 @@
-// upload.js
 let selectedFiles = [];
 let images = [];
 let idCounter = 0;
@@ -84,9 +83,9 @@ window.uploadImages = async function () {
     }
   }
 
-  status.innerText = `已成功上傳 ${selectedFiles.length} 張圖片到分類「${category}」`;
-  fileInput.value = '';
+  status.innerText = `✅ 已成功上傳 ${selectedFiles.length} 張圖片`;
   selectedFiles = [];
+  fileInput.value = '';
   renderGallery();
 };
 
@@ -108,6 +107,23 @@ window.deleteSelected = function () {
   renderGallery();
 };
 
+export async function loadWardrobe(userId, category = 'all') {
+  try {
+    const res = await fetch(`/wardrobe?user_id=${userId}&category=${category}`);
+    const data = await res.json();
+    images = data.map(item => ({
+      id: idCounter++,
+      file: null,
+      category: item.category,
+      url: item.url,
+      selected: false,
+    }));
+    renderGallery();
+  } catch (err) {
+    console.error('載入 wardrobe 失敗:', err);
+  }
+}
+
 function renderGallery() {
   gallery.innerHTML = '';
   const filtered = currentFilter === 'all' ? images : images.filter(img => img.category === currentFilter);
@@ -121,8 +137,8 @@ function renderGallery() {
 
     const imgEl = document.createElement('img');
     imgEl.src = img.url;
-    imgEl.alt = img.file?.name || '上傳圖片';
-    imgEl.title = `${img.file?.name || '圖片'} (${img.category})`;
+    imgEl.alt = img.file ? img.file.name : '';
+    imgEl.title = `${img.category}`;
 
     const checkbox = document.createElement('input');
     checkbox.type = 'checkbox';
@@ -133,23 +149,4 @@ function renderGallery() {
     wrapper.appendChild(checkbox);
     gallery.appendChild(wrapper);
   });
-}
-
-// 載入後端已有圖片
-window.loadWardrobe = async function (userId, category = 'all') {
-  try {
-    const res = await fetch(`/wardrobe?user_id=${userId}&category=${category}`);
-    const data = await res.json();
-
-    images = data.map(item => ({
-      id: idCounter++,
-      file: null,
-      category: item.category,
-      url: item.url,
-      selected: false,
-    }));
-    renderGallery();
-  } catch (err) {
-    console.error('載入 wardrobe 失敗:', err);
-  }
 }
