@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <title>👚 衣櫃上傳</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+  <div style="max-width: 600px; margin: 20px auto; text-align: center;">
+    <!-- 選擇圖片 -->
+    <div>
+      <input type="file" id="file-input" accept="image/*" multiple style="display:none;" />
+      <button type="button" onclick="openImageSourceSelector()">📷 選擇圖片 (本機 / LINE 拍照/相簿)</button>
+    </div>
+
+    <!-- 分類 + 上傳 -->
+    <select id="category-select" style="margin-top: 10px;">
+      <option value="top">上衣</option>
+      <option value="bottom">下身</option>
+      <option value="shoes">鞋子</option>
+    </select>
+    <button type="button" onclick="uploadImages()" style="margin-left: 10px;">上傳</button>
+
+    <!-- 狀態 -->
+    <div id="status" style="margin-top: 10px; font-weight: bold;"></div>
+
+    <hr>
+
+    <!-- 分類篩選 + 刪除 -->
+    <div class="category-buttons" style="margin-bottom: 10px;">
+      <button onclick="filterCategory('all')">全部</button>
+      <button onclick="filterCategory('top')">只看上衣</button>
+      <button onclick="filterCategory('bottom')">只看下身</button>
+      <button onclick="filterCategory('shoes')">只看鞋子</button>
+      <button onclick="deleteSelected()">刪除選取圖片</button>
+    </div>
+
+    <!-- 圖片預覽區 -->
+    <div id="closet-gallery"></div>
+  </div>
+
+  <!-- LIFF SDK + 前端邏輯 -->
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <script type="module" src="./js/liff-init.js"></script>
+  <script type="module" src="./js/upload.js"></script>
+</body>
+</html>
