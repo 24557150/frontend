@@ -29,14 +29,17 @@
 
     <hr>
 
-    <!-- 分類篩選 + 刪除 -->
-    <div class="category-buttons" style="margin-bottom: 10px;">
-      <button onclick="filterCategory('all')">全部</button>
-      <button onclick="filterCategory('top')">只看上衣</button>
-      <button onclick="filterCategory('bottom')">只看下身</button>
-      <button onclick="filterCategory('shoes')">只看鞋子</button>
-      <button onclick="deleteSelected()">刪除選取圖片</button>
-    </div>
+   <!-- ✅ 改這裡：加上 id -->
+<button id="upload-button" style="margin-left: 10px;">上傳</button>
+
+<div class="category-buttons" style="margin-bottom: 10px;">
+  <!-- ✅ 加上 id -->
+  <button id="all-button">全部</button>
+  <button id="top-button">只看上衣</button>
+  <button id="bottom-button">只看下身</button>
+  <button id="shoes-button">只看鞋子</button>
+  <button id="delete-button">刪除選取圖片</button>
+</div>
 
     <!-- 圖片預覽區 -->
     <div id="closet-gallery"></div>
