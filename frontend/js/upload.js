@@ -1,4 +1,4 @@
-export const backendURL = 'https://03f969b6c0f7.ngrok-free.app';
+export const backendURL = 'https://b58bf88c77ed.ngrok-free.app';
 
 document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('upload-button').addEventListener('click', uploadImages);
@@ -72,7 +72,6 @@ function displayImages(images) {
 
   images.forEach(img => {
     const fullPath = `${backendURL}${img.path}`;
-    imgElement.src = fullPath;
 
     const wrapper = document.createElement("div");
     wrapper.className = `image-item ${img.category}`;
