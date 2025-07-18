@@ -1,23 +1,23 @@
-# backend/database/init_db.py
-
 import sqlite3, os
 
+# 專案根目錄
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+# 資料庫與 Schema 檔案路徑
+DB_PATH = os.path.join(BASE_DIR, 'database', 'db.sqlite')
+SCHEMA_PATH = os.path.join(BASE_DIR, 'database', 'schema.sql')
+
 # 確保 database 資料夾存在
-os.makedirs("backend/database", exist_ok=True)
+os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
 
-# 連線到 SQLite
-conn = sqlite3.connect("backend/database/db.sqlite")
+# 讀取 schema.sql 並建立資料庫
+with open(SCHEMA_PATH, 'r', encoding='utf-8') as f:
+    schema = f.read()
 
-# 建立 wardrobe 資料表
-conn.execute("""
-CREATE TABLE IF NOT EXISTS wardrobe (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id TEXT NOT NULL,
-    filename TEXT NOT NULL,
-    category TEXT NOT NULL
-)
-""")
-
+conn = sqlite3.connect(DB_PATH)
+conn.executescript(schema)
 conn.commit()
 conn.close()
-print("✅ 已成功建立 wardrobe 資料表")
+
+print(f"✅ SQLite 資料庫初始化完成，路徑: {DB_PATH}")
+
