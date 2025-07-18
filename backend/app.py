@@ -89,15 +89,17 @@ def delete():
     deleted = 0
     for full_url in paths:
         try:
-            # 確保從完整 URL 拆出 user_id, category, filename
-            if "static/uploads/" in full_url:
-                rel_path = full_url.split("static/uploads/")[-1]
-            else:
+            if "static/uploads/" not in full_url:
                 continue
-            parts = rel_path.split("/", 3)  # [user_id, category, filename]
+            rel_path = full_url.split("static/uploads/")[-1]  # user_id/category/filename
+
+            parts = rel_path.split("/", 2)  # 確保三層
             if len(parts) != 3:
                 continue
-            _, category, filename = parts
+            u_id, category, filename = parts
+
+            if u_id != user_id:
+                continue
 
             db.execute(
                 "DELETE FROM wardrobe WHERE user_id = ? AND category = ? AND filename = ?",
