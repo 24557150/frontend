@@ -4,18 +4,16 @@
   <meta charset="UTF-8" />
   <title>👚 衣櫃上傳</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link rel="stylesheet" href="frontend/style.css">
   <style>
-    /* 基本樣式 */
     #image-list img {
       border-radius: 8px;
       border: 1px solid #ccc;
       padding: 2px;
     }
     .image-item {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
+      display: inline-block;
+      margin: 10px;
+      text-align: center;
     }
   </style>
 </head>
@@ -23,50 +21,32 @@
   <div style="max-width: 600px; margin: 20px auto; text-align: center;">
     <h2>👤 <span id="user-name">尚未登入</span></h2>
 
-    <!-- 圖片選擇 -->
-    <div>
-      <input type="file" id="image-input" accept="image/*" multiple style="display:none;" />
-      <button type="button" onclick="openImageSourceSelector()">📷 選擇圖片 (本機 / LINE 拍照/相簿)</button>
-    </div>
+    <!-- 選擇圖片 -->
+    <input type="file" id="image-input" accept="image/*" multiple /><br><br>
 
-    <!-- 分類 + 上傳 -->
-    <select id="category" style="margin-top: 10px;">
+    <!-- 選擇分類 -->
+    <select id="category">
+      <option value="">請選擇分類</option>
       <option value="top">上衣</option>
       <option value="bottom">下身</option>
       <option value="shoes">鞋子</option>
-    </select>
-    <button id="upload-button" type="button" style="margin-left: 10px;">上傳</button>
+    </select><br><br>
 
-    <!-- 狀態列 -->
-    <div id="status" style="margin-top: 10px; font-weight: bold;">🔄 等待登入...</div>
+    <!-- 上傳 / 刪除 / 篩選 -->
+    <button id="upload-button">📤 上傳圖片</button>
+    <button id="delete-button">🗑️ 刪除選取</button>
+    <br><br>
+    <button id="all-button">全部</button>
+    <button id="top-button">上衣</button>
+    <button id="bottom-button">下身</button>
+    <button id="shoes-button">鞋子</button>
+    <br><br>
 
-    <hr>
-
-    <!-- 分類與刪除 -->
-    <div class="category-buttons" style="margin-bottom: 10px;">
-      <button id="all-button">全部</button>
-      <button id="top-button">只看上衣</button>
-      <button id="bottom-button">只看下身</button>
-      <button id="shoes-button">只看鞋子</button>
-      <button id="delete-button">刪除選取圖片</button>
-    </div>
-
-    <!-- 圖片列表 -->
-    <div id="image-list" style="display: flex; flex-wrap: wrap; gap: 10px; justify-content: center;"></div>
+    <!-- 顯示圖片 -->
+    <div id="image-list"></div>
   </div>
 
-  <!-- LIFF SDK -->
-  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
-
-  <!-- 模組化腳本 -->
-  <script type="module" src="frontend/js/liff-init.js"></script>
+  <!-- 載入 JS -->
   <script type="module" src="frontend/js/upload.js"></script>
-
-  <!-- 防呆：選擇圖片 -->
-  <script>
-    function openImageSourceSelector() {
-      document.getElementById('image-input').click();
-    }
-  </script>
 </body>
 </html>
