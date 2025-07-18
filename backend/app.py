@@ -6,7 +6,7 @@ from werkzeug.utils import secure_filename
 
 # === 初始化 Flask 與 CORS ===
 app = Flask(__name__)
-CORS(app)  # ✅ 支援跨來源請求，讓 GitHub Pages 可訪問
+CORS(app)  # 允許跨網域
 
 # === 設定資料夾與資料庫位置 ===
 UPLOAD_FOLDER = os.path.join("static", "uploads")
@@ -26,7 +26,7 @@ def close_db(exception=None):
     if db is not None:
         db.close()
 
-# ✅ 第 1：上傳圖片 API
+# 上傳圖片 API
 @app.route('/upload', methods=['POST'])
 def upload():
     image = request.files.get('image')
@@ -36,6 +36,7 @@ def upload():
     if not image or not category or not user_id:
         return jsonify({"status": "error", "message": "缺少必要參數"}), 400
 
+    # 確保目錄存在
     save_dir = os.path.join(UPLOAD_FOLDER, user_id, category)
     os.makedirs(save_dir, exist_ok=True)
 
@@ -43,7 +44,8 @@ def upload():
     filepath = os.path.join(save_dir, filename)
     image.save(filepath)
 
-    # ➕ 寫入資料庫
+    # 存入資料庫，路徑記錄為 /static/uploads/... 方便前端取用
+    rel_path = f"/static/uploads/{user_id}/{category}/{filename}"
     db = get_db()
     db.execute(
         "INSERT INTO wardrobe (user_id, filename, category) VALUES (?, ?, ?)",
@@ -51,9 +53,9 @@ def upload():
     )
     db.commit()
 
-    return jsonify({"status": "ok", "filename": filename})
+    return jsonify({"status": "ok", "path": rel_path, "category": category})
 
-# ✅ 第 2：取得衣櫃圖片清單 API
+# 取得衣櫃圖片清單 API
 @app.route('/wardrobe', methods=['GET'])
 def wardrobe():
     user_id = request.args.get('user_id')
@@ -81,7 +83,7 @@ def wardrobe():
         ]
     })
 
-# ✅ 第 3：刪除圖片 API
+# 刪除圖片 API
 @app.route('/delete', methods=['POST'])
 def delete():
     data = request.get_json()
@@ -96,12 +98,19 @@ def delete():
 
     for full_path in paths:
         try:
-            rel_path = full_path.split("/static/uploads/")[-1]
-            category, filename = rel_path.replace(f"{user_id}/", "").split("/", 1)
+            # full_path 格式: /static/uploads/user_id/category/filename.jpg
+            rel_path = full_path.replace("/static/uploads/", "")
+            parts = rel_path.split("/", 2)  # [user_id, category, filename]
+            if len(parts) < 3:
+                continue
+
+            category, filename = parts[1], parts[2]
+
             db.execute(
                 "DELETE FROM wardrobe WHERE user_id = ? AND category = ? AND filename = ?",
                 (user_id, category, filename)
             )
+
             file_path = os.path.join("static", "uploads", user_id, category, filename)
             if os.path.exists(file_path):
                 os.remove(file_path)
@@ -112,7 +121,7 @@ def delete():
     db.commit()
     return jsonify({"status": "ok", "deleted": deleted})
 
-# 測試用首頁
+# 測試首頁
 @app.route('/')
 def index():
     return '✅ Flask 伺服器已啟動，可使用 /upload /wardrobe /delete'
