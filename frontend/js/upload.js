@@ -72,6 +72,7 @@ function displayImages(images) {
 
   images.forEach(img => {
     const fullPath = `${backendURL}${img.path}`;
+    imgElement.src = fullPath;
 
     const wrapper = document.createElement("div");
     wrapper.className = `image-item ${img.category}`;
