@@ -1,4 +1,3 @@
-// frontend/js/upload.js
 export const backendURL = 'https://7d3e145bb3d0.ngrok-free.app';
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -31,7 +30,8 @@ async function uploadImages() {
 
     try {
       const res = await fetch(`${backendURL}/upload`, { method: 'POST', body: formData });
-      if (!res.ok) console.error(`❌ 上傳失敗: ${file.name}`);
+      const json = await res.json();
+      if (!res.ok || json.status !== "ok") console.error(`❌ 上傳失敗: ${file.name}`, json);
     } catch (err) {
       console.error('❌ 上傳錯誤:', err);
     }
@@ -43,8 +43,13 @@ async function uploadImages() {
 export async function loadWardrobe(userId) {
   try {
     const res = await fetch(`${backendURL}/wardrobe?user_id=${userId}`);
-    const data = await res.json();
-    displayImages(data.images);
+    const text = await res.text(); // 先拿原始內容
+    try {
+      const data = JSON.parse(text);
+      displayImages(data.images);
+    } catch (e) {
+      console.error("❌ API 回應非 JSON:", text);
+    }
   } catch (err) {
     console.error("❌ 載入衣櫃失敗", err);
   }
@@ -55,7 +60,7 @@ function displayImages(images) {
   imageList.innerHTML = "";
 
   images.forEach(img => {
-    const fullPath = `${backendURL}${img.path}`; // 確保加上 ngrok URL
+    const fullPath = `${backendURL}${img.path}`;
 
     const wrapper = document.createElement("div");
     wrapper.className = `image-item ${img.category}`;
@@ -70,7 +75,7 @@ function displayImages(images) {
 
     const checkbox = document.createElement("input");
     checkbox.type = "checkbox";
-    checkbox.dataset.path = img.path;
+    checkbox.dataset.path = fullPath;
     checkbox.style.marginTop = "5px";
 
     wrapper.appendChild(imgElement);
@@ -99,8 +104,12 @@ async function deleteSelected() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ user_id: userId, paths }),
     });
-
-    if (res.ok) await loadWardrobe(userId);
+    const json = await res.json();
+    if (res.ok && json.status === "ok") {
+      await loadWardrobe(userId);
+    } else {
+      console.error("❌ 刪除失敗:", json);
+    }
   } catch (err) {
     console.error("❌ 刪除錯誤:", err);
   }
