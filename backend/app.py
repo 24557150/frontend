@@ -90,27 +90,37 @@ def delete():
 
     db = get_db()
     deleted = 0
-    for full_path in paths:
+    for full_url in paths:
         try:
-            # full_path 是完整 URL，需還原成檔案名
-            rel_path = full_path.replace("/static/uploads/", "")
-            parts = rel_path.split("/", 2)
-            if len(parts) < 3:
+            # 移除 ngrok 或 domain，只保留相對路徑
+            if "static/uploads/" in full_url:
+                rel_path = full_url.split("static/uploads/")[-1]  # Uae.../top/file.jpg
+            else:
                 continue
-            category, filename = parts[1], parts[2]
+
+            parts = rel_path.split("/", 3)  # [user_id, category, filename]
+            if len(parts) != 3:
+                continue
+            _, category, filename = parts
+
+            # 刪除 DB 紀錄
             db.execute(
                 "DELETE FROM wardrobe WHERE user_id = ? AND category = ? AND filename = ?",
                 (user_id, category, filename)
             )
+
+            # 刪除實際檔案
             file_path = os.path.join(UPLOAD_FOLDER, user_id, category, filename)
             if os.path.exists(file_path):
                 os.remove(file_path)
+
             deleted += 1
         except Exception as e:
             print("刪除失敗:", e)
 
     db.commit()
     return jsonify({"status": "ok", "deleted": deleted})
+
 
 @app.route('/')
 def index():
