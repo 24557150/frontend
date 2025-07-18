@@ -55,7 +55,7 @@ function displayImages(images) {
   imageList.innerHTML = "";
 
   images.forEach(img => {
-    const fullPath = `${backendURL}${img.path}`;
+    const fullPath = `${backendURL}${img.path}`; // 確保加上 ngrok URL
 
     const wrapper = document.createElement("div");
     wrapper.className = `image-item ${img.category}`;

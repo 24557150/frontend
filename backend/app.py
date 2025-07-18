@@ -41,10 +41,8 @@ def upload():
 
     rel_path = f"/static/uploads/{user_id}/{category}/{filename}".replace("\\", "/")
     db = get_db()
-    db.execute(
-        "INSERT INTO wardrobe (user_id, filename, category) VALUES (?, ?, ?)",
-        (user_id, filename, category)
-    )
+    db.execute("INSERT INTO wardrobe (user_id, filename, category) VALUES (?, ?, ?)",
+               (user_id, filename, category))
     db.commit()
 
     return jsonify({"status": "ok", "path": rel_path, "category": category})
@@ -93,10 +91,8 @@ def delete():
             if len(parts) < 3:
                 continue
             category, filename = parts[1], parts[2]
-            db.execute(
-                "DELETE FROM wardrobe WHERE user_id = ? AND category = ? AND filename = ?",
-                (user_id, category, filename)
-            )
+            db.execute("DELETE FROM wardrobe WHERE user_id = ? AND category = ? AND filename = ?",
+                       (user_id, category, filename))
             file_path = os.path.join("static", "uploads", user_id, category, filename)
             if os.path.exists(file_path):
                 os.remove(file_path)
