@@ -36,7 +36,7 @@ def upload():
     if not image or not category or not user_id:
         return jsonify([
         {
-            "path": os.path.join(base_url, row['category'], row['filename']).replace("\", "/"),
+            "path": os.path.join(base_url, row['category'], row['filename']).replace("\\", "/"),
             "category": row['category']
         } for row in rows
     ]), 400
