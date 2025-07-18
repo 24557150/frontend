@@ -33,6 +33,7 @@ async function uploadImages() {
       const json = await res.json();
       if (!res.ok || json.status !== "ok") console.error(`❌ 上傳失敗: ${file.name}`, json);
     } catch (err) {
+      alert("⚠️ 後端連線失敗，請檢查 ngrok 是否啟動");
       console.error('❌ 上傳錯誤:', err);
     }
   }
@@ -43,14 +44,16 @@ async function uploadImages() {
 export async function loadWardrobe(userId) {
   try {
     const res = await fetch(`${backendURL}/wardrobe?user_id=${userId}`);
-    const text = await res.text(); // 先拿原始內容
+    const text = await res.text(); // 避免 ngrok 斷線 HTML 造成 JSON 解析錯誤
     try {
       const data = JSON.parse(text);
       displayImages(data.images);
     } catch (e) {
+      alert("⚠️ 後端回應錯誤，請確認 ngrok URL 是否正確啟動");
       console.error("❌ API 回應非 JSON:", text);
     }
   } catch (err) {
+    alert("⚠️ 無法連接後端，請檢查 ngrok 是否運行");
     console.error("❌ 載入衣櫃失敗", err);
   }
 }
@@ -111,6 +114,7 @@ async function deleteSelected() {
       console.error("❌ 刪除失敗:", json);
     }
   } catch (err) {
+    alert("⚠️ 無法連接後端，請檢查 ngrok 是否運行");
     console.error("❌ 刪除錯誤:", err);
   }
 }
