@@ -67,6 +67,7 @@ def wardrobe():
 
     rows = db.execute(query, params).fetchall()
 
+    # 確保一定回傳 JSON
     return jsonify({
         "images": [
             {
@@ -89,6 +90,7 @@ def delete():
     deleted = 0
     for full_path in paths:
         try:
+            # full_path 是完整 URL，需還原成檔案名
             rel_path = full_path.replace("/static/uploads/", "")
             parts = rel_path.split("/", 2)
             if len(parts) < 3:
@@ -110,7 +112,7 @@ def delete():
 
 @app.route('/')
 def index():
-    return '✅ Flask 伺服器運行中'
+    return jsonify({"status": "running", "message": "Flask 伺服器運行中"})
 
 if __name__ == '__main__':
     app.run(debug=True)
