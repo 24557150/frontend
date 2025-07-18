@@ -61,21 +61,15 @@ export async function loadWardrobe(userId) {
   }
 }
 
-// 顯示圖片
 function displayImages(images) {
-  const container = document.getElementById('image-list');
-  container.innerHTML = '';
-
-  console.log("📷 準備顯示圖片", images); // 除錯：顯示即將渲染的圖片資料
+  const imageList = document.getElementById("image-list");
+  imageList.innerHTML = "";
 
   images.forEach(img => {
-    const div = document.createElement('div');
-    div.className = `image-item ${img.category}`;
-    div.innerHTML = `
-      <img src="${backendURL}/${img.path}" alt="${img.category}" width="100">
-      <input type="checkbox" data-path="${img.path}">
-    `;
-    container.appendChild(div);
+    const imgElement = document.createElement("img");
+    imgElement.src = `${backendURL}${img.path}`; // ✅ 要補完整 ngrok 網址
+    imgElement.style.width = "150px";
+    imageList.appendChild(imgElement);
   });
 }
 
