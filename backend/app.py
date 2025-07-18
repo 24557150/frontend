@@ -6,7 +6,7 @@ from werkzeug.utils import secure_filename
 
 # === 初始化 Flask 與 CORS ===
 app = Flask(__name__)
-CORS(app)  # 允許跨網域
+CORS(app)  # 允許跨網域存取，讓 GitHub Pages 前端能請求
 
 # === 設定資料夾與資料庫位置 ===
 UPLOAD_FOLDER = os.path.join("static", "uploads")
@@ -26,7 +26,7 @@ def close_db(exception=None):
     if db is not None:
         db.close()
 
-# 上傳圖片 API
+# === 上傳圖片 API ===
 @app.route('/upload', methods=['POST'])
 def upload():
     image = request.files.get('image')
@@ -34,12 +34,7 @@ def upload():
     user_id = request.form.get('user_id')
 
     if not image or not category or not user_id:
-        return jsonify([
-        {
-            "path": os.path.join(base_url, row['category'], row['filename']).replace("\\", "/"),
-            "category": row['category']
-        } for row in rows
-    ]), 400
+        return jsonify({"status": "error", "message": "缺少必要參數"}), 400
 
     # 確保目錄存在
     save_dir = os.path.join(UPLOAD_FOLDER, user_id, category)
@@ -49,8 +44,7 @@ def upload():
     filepath = os.path.join(save_dir, filename)
     image.save(filepath)
 
-    # 存入資料庫，路徑記錄為 /static/uploads/... 方便前端取用
-    rel_path = f"/static/uploads/{user_id}/{category}/{filename}"
+    # 存入資料庫
     db = get_db()
     db.execute(
         "INSERT INTO wardrobe (user_id, filename, category) VALUES (?, ?, ?)",
@@ -58,26 +52,17 @@ def upload():
     )
     db.commit()
 
-    return jsonify([
-        {
-            "path": os.path.join(base_url, row['category'], row['filename']).replace("\\", "/"),
-            "category": row['category']
-        } for row in rows
-    ])
+    rel_path = f"/static/uploads/{user_id}/{category}/{filename}"
+    return jsonify({"status": "ok", "path": rel_path, "category": category})
 
-# 取得衣櫃圖片清單 API
+# === 取得使用者衣櫃圖片 ===
 @app.route('/wardrobe', methods=['GET'])
 def wardrobe():
     user_id = request.args.get('user_id')
     category = request.args.get('category')
 
     if not user_id:
-        return jsonify([
-        {
-            "path": os.path.join(base_url, row['category'], row['filename']).replace("\\", "/"),
-            "category": row['category']
-        } for row in rows
-    ]), 400
+        return jsonify({"status": "error", "message": "缺少 user_id"}), 400
 
     db = get_db()
     query = "SELECT filename, category FROM wardrobe WHERE user_id = ?"
@@ -89,16 +74,15 @@ def wardrobe():
     rows = db.execute(query, params).fetchall()
     base_url = f"/static/uploads/{user_id}"
 
-    return jsonify({
-        "images": [
-            {
-                "path": os.path.join(base_url, row['category'], row['filename']).replace("\\", "/"),
-                "category": row['category']
-            } for row in rows
-        ]
-    })
+    # 直接回傳陣列，符合 upload.js 的 displayImages() 使用方式
+    return jsonify([
+        {
+            "path": os.path.join(base_url, row['category'], row['filename']).replace("\\", "/"),
+            "category": row['category']
+        } for row in rows
+    ])
 
-# 刪除圖片 API
+# === 刪除圖片 API ===
 @app.route('/delete', methods=['POST'])
 def delete():
     data = request.get_json()
@@ -106,12 +90,7 @@ def delete():
     paths = data.get('paths', [])
 
     if not user_id or not paths:
-        return jsonify([
-        {
-            "path": os.path.join(base_url, row['category'], row['filename']).replace("\\", "/"),
-            "category": row['category']
-        } for row in rows
-    ]), 400
+        return jsonify({"status": "error", "message": "缺少 user_id 或 paths"}), 400
 
     db = get_db()
     deleted = 0
@@ -139,17 +118,12 @@ def delete():
             print("刪除失敗:", e)
 
     db.commit()
-    return jsonify([
-        {
-            "path": os.path.join(base_url, row['category'], row['filename']).replace("\\", "/"),
-            "category": row['category']
-        } for row in rows
-    ])
+    return jsonify({"status": "ok", "deleted": deleted})
 
-# 測試首頁
+# === 測試首頁 ===
 @app.route('/')
 def index():
-    return '✅ Flask 伺服器已啟動，可使用 /upload /wardrobe /delete'
+    return '✅ Flask 伺服器已啟動，使用 /upload /wardrobe /delete'
 
 if __name__ == '__main__':
     app.run(debug=True)
