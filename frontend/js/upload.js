@@ -29,7 +29,7 @@ async function uploadImages() {
     formData.append('user_id', userId);
 
     try {
-      const res = await fetch(`${backendURL}/upload`, { method: 'POST', body: formData });
+      const res = await fetch(`${backendURL}/upload`, { method: 'POST', body: formData, headers: { 'ngrok-skip-browser-warning': 'any' }, credentials: 'include' });
       const json = await res.json();
       if (!res.ok || json.status !== "ok") console.error(`❌ 上傳失敗: ${file.name}`, json);
     } catch (err) {
@@ -43,7 +43,7 @@ async function uploadImages() {
 
 export async function loadWardrobe(userId) {
   try {
-    const res = await fetch(`${backendURL}/wardrobe?user_id=${userId}`);
+    const res = await fetch(`${backendURL}/wardrobe?user_id=${userId}`, { headers: { 'ngrok-skip-browser-warning': 'any' }, credentials: 'include' });
     const text = await res.text(); // 避免 ngrok 斷線 HTML 造成 JSON 解析錯誤
     try {
       const data = JSON.parse(text);
@@ -102,7 +102,7 @@ async function deleteSelected() {
   if (!paths.length) return alert('請選擇要刪除的圖片');
 
   try {
-    const res = await fetch(`${backendURL}/delete`, {
+    const res = await fetch(`${backendURL}/delete`, { headers: { 'ngrok-skip-browser-warning': 'any', 'Content-Type': 'application/json' }, credentials: 'include',
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ user_id: userId, paths }),
