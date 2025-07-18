@@ -1,11 +1,13 @@
 from flask import Flask, request, jsonify, g
 from flask_cors import CORS
+from flask import Flask, request, jsonify, g
+from flask_cors import CORS
 import os
 import sqlite3
 from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
-CORS(app)
+CORS(app, supports_credentials=True)
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 UPLOAD_FOLDER = os.path.join(BASE_DIR, "static", "uploads")
