@@ -4,16 +4,13 @@ import os
 import sqlite3
 from werkzeug.utils import secure_filename
 
-# === 初始化 Flask 與 CORS ===
 app = Flask(__name__)
-CORS(app)  # 允許跨網域
+CORS(app)
 
-# === 設定資料夾與資料庫位置 ===
 UPLOAD_FOLDER = os.path.join("static", "uploads")
 DATABASE = os.path.join("database", "db.sqlite")
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
-# === 資料庫連線處理 ===
 def get_db():
     if 'db' not in g:
         g.db = sqlite3.connect(DATABASE)
@@ -26,7 +23,6 @@ def close_db(exception=None):
     if db is not None:
         db.close()
 
-# 上傳圖片 API
 @app.route('/upload', methods=['POST'])
 def upload():
     image = request.files.get('image')
@@ -36,7 +32,6 @@ def upload():
     if not image or not category or not user_id:
         return jsonify({"status": "error", "message": "缺少必要參數"}), 400
 
-    # 確保目錄存在
     save_dir = os.path.join(UPLOAD_FOLDER, user_id, category)
     os.makedirs(save_dir, exist_ok=True)
 
@@ -44,8 +39,7 @@ def upload():
     filepath = os.path.join(save_dir, filename)
     image.save(filepath)
 
-    # 存入資料庫，路徑記錄為 /static/uploads/... 方便前端取用
-    rel_path = f"/static/uploads/{user_id}/{category}/{filename}"
+    rel_path = f"/static/uploads/{user_id}/{category}/{filename}".replace("\\", "/")
     db = get_db()
     db.execute(
         "INSERT INTO wardrobe (user_id, filename, category) VALUES (?, ?, ?)",
@@ -55,7 +49,6 @@ def upload():
 
     return jsonify({"status": "ok", "path": rel_path, "category": category})
 
-# 取得衣櫃圖片清單 API
 @app.route('/wardrobe', methods=['GET'])
 def wardrobe():
     user_id = request.args.get('user_id')
@@ -72,18 +65,16 @@ def wardrobe():
         params.append(category)
 
     rows = db.execute(query, params).fetchall()
-    base_url = f"/static/uploads/{user_id}"
 
     return jsonify({
         "images": [
             {
-                "path": os.path.join(base_url, row['category'], row['filename']).replace("\\", "/"),
+                "path": f"/static/uploads/{user_id}/{row['category']}/{row['filename']}".replace("\\", "/"),
                 "category": row['category']
             } for row in rows
         ]
     })
 
-# 刪除圖片 API
 @app.route('/delete', methods=['POST'])
 def delete():
     data = request.get_json()
@@ -95,22 +86,17 @@ def delete():
 
     db = get_db()
     deleted = 0
-
     for full_path in paths:
         try:
-            # full_path 格式: /static/uploads/user_id/category/filename.jpg
             rel_path = full_path.replace("/static/uploads/", "")
-            parts = rel_path.split("/", 2)  # [user_id, category, filename]
+            parts = rel_path.split("/", 2)
             if len(parts) < 3:
                 continue
-
             category, filename = parts[1], parts[2]
-
             db.execute(
                 "DELETE FROM wardrobe WHERE user_id = ? AND category = ? AND filename = ?",
                 (user_id, category, filename)
             )
-
             file_path = os.path.join("static", "uploads", user_id, category, filename)
             if os.path.exists(file_path):
                 os.remove(file_path)
@@ -121,10 +107,9 @@ def delete():
     db.commit()
     return jsonify({"status": "ok", "deleted": deleted})
 
-# 測試首頁
 @app.route('/')
 def index():
-    return '✅ Flask 伺服器已啟動，可使用 /upload /wardrobe /delete'
+    return '✅ Flask 伺服器運行中'
 
 if __name__ == '__main__':
     app.run(debug=True)
