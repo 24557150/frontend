@@ -8,6 +8,7 @@
   <style>
     #image-list img { border-radius: 8px; border: 1px solid #ccc; padding: 2px; }
     .image-item { display: flex; flex-direction: column; align-items: center; }
+    button { margin: 5px; padding: 8px 12px; }
   </style>
 </head>
 <body>
@@ -40,9 +41,43 @@
     <div id="image-list" style="display: flex; flex-wrap: wrap; gap: 10px; justify-content: center;"></div>
   </div>
 
+  <!-- LIFF SDK -->
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
-  <script type="module" src="frontend/js/liff-init.js"></script>
+
+  <!-- 初始化 LIFF，登入並抓 user_id -->
+  <script>
+    async function initLiff() {
+      try {
+        await liff.init({ liffId: "你的-LIFF-ID" }); // TODO: 換成你的 LIFF ID
+        if (!liff.isLoggedIn()) {
+          liff.login();
+          return;
+        }
+
+        const profile = await liff.getProfile();
+        document.getElementById('user-name').innerText = profile.displayName;
+        document.getElementById('status').innerText = "✅ 已登入";
+
+        // 存 user_id 到 localStorage，upload.js 會用
+        localStorage.setItem('user_id', profile.userId);
+
+        // 通知 upload.js 載入衣櫃
+        if (typeof window.loadWardrobe === 'function') {
+          window.loadWardrobe(profile.userId);
+        }
+      } catch (err) {
+        console.error("LIFF 初始化失敗:", err);
+        document.getElementById('status').innerText = "❌ 無法登入 LINE";
+      }
+    }
+    initLiff();
+
+    function openImageSourceSelector() {
+      document.getElementById('image-input').click();
+    }
+  </script>
+
+  <!-- 功能腳本 -->
   <script type="module" src="frontend/js/upload.js"></script>
-  <script>function openImageSourceSelector() { document.getElementById('image-input').click(); }</script>
 </body>
 </html>
