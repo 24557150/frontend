@@ -1,15 +1,14 @@
 from flask import Flask, request, jsonify, g
+from flask_cors import CORS
 import os
 import sqlite3
 from werkzeug.utils import secure_filename
 
-from flask_cors import CORS
+# === 初始化 Flask 與 CORS ===
 app = Flask(__name__)
-CORS(app)
+CORS(app)  # ✅ 支援跨來源請求，讓 GitHub Pages 可訪問
 
-
-# === 基本設定 ===
-app = Flask(__name__)
+# === 設定資料夾與資料庫位置 ===
 UPLOAD_FOLDER = os.path.join("static", "uploads")
 DATABASE = os.path.join("database", "db.sqlite")
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
@@ -27,7 +26,7 @@ def close_db(exception=None):
     if db is not None:
         db.close()
 
-# ✅ 第 1：上傳圖片 API（並寫入資料庫）
+# ✅ 第 1：上傳圖片 API
 @app.route('/upload', methods=['POST'])
 def upload():
     image = request.files.get('image')
@@ -41,10 +40,10 @@ def upload():
     os.makedirs(save_dir, exist_ok=True)
 
     filename = secure_filename(image.filename)
-    path = os.path.join(save_dir, filename)
-    image.save(path)
+    filepath = os.path.join(save_dir, filename)
+    image.save(filepath)
 
-    # ➕ 寫入 wardrobe 資料表
+    # ➕ 寫入資料庫
     db = get_db()
     db.execute(
         "INSERT INTO wardrobe (user_id, filename, category) VALUES (?, ?, ?)",
@@ -54,8 +53,7 @@ def upload():
 
     return jsonify({"status": "ok", "filename": filename})
 
-
-# ✅ 第 2：取得使用者的圖片清單 API
+# ✅ 第 2：取得衣櫃圖片清單 API
 @app.route('/wardrobe', methods=['GET'])
 def wardrobe():
     user_id = request.args.get('user_id')
@@ -74,16 +72,50 @@ def wardrobe():
     rows = db.execute(query, params).fetchall()
     base_url = f"/static/uploads/{user_id}"
 
-    return jsonify([
-        {"url": f"{base_url}/{row['category']}/{row['filename']}", "category": row['category']}
-        for row in rows
-    ])
+    return jsonify({
+        "images": [
+            {
+                "path": os.path.join(base_url, row['category'], row['filename']).replace("\\", "/"),
+                "category": row['category']
+            } for row in rows
+        ]
+    })
 
+# ✅ 第 3：刪除圖片 API
+@app.route('/delete', methods=['POST'])
+def delete():
+    data = request.get_json()
+    user_id = data.get('user_id')
+    paths = data.get('paths', [])
 
-# ✅ 測試用首頁
+    if not user_id or not paths:
+        return jsonify({"status": "error", "message": "缺少 user_id 或 paths"}), 400
+
+    db = get_db()
+    deleted = 0
+
+    for full_path in paths:
+        try:
+            rel_path = full_path.split("/static/uploads/")[-1]
+            category, filename = rel_path.replace(f"{user_id}/", "").split("/", 1)
+            db.execute(
+                "DELETE FROM wardrobe WHERE user_id = ? AND category = ? AND filename = ?",
+                (user_id, category, filename)
+            )
+            file_path = os.path.join("static", "uploads", user_id, category, filename)
+            if os.path.exists(file_path):
+                os.remove(file_path)
+            deleted += 1
+        except Exception as e:
+            print("刪除失敗:", e)
+
+    db.commit()
+    return jsonify({"status": "ok", "deleted": deleted})
+
+# 測試用首頁
 @app.route('/')
 def index():
-    return 'Server running. You can POST to /upload or GET /wardrobe'
+    return '✅ Flask 伺服器已啟動，可使用 /upload /wardrobe /delete'
 
 if __name__ == '__main__':
     app.run(debug=True)
