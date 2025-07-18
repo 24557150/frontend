@@ -1,13 +1,11 @@
 from flask import Flask, request, jsonify, g
 from flask_cors import CORS
-from flask import Flask, request, jsonify, g
-from flask_cors import CORS
 import os
 import sqlite3
 from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
-CORS(app, supports_credentials=True)
+CORS(app, supports_credentials=True)  # 允許跨來源，支援 LINE WebView
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 UPLOAD_FOLDER = os.path.join(BASE_DIR, "static", "uploads")
@@ -69,7 +67,6 @@ def wardrobe():
 
     rows = db.execute(query, params).fetchall()
 
-    # 確保一定回傳 JSON
     return jsonify({
         "images": [
             {
@@ -92,24 +89,21 @@ def delete():
     deleted = 0
     for full_url in paths:
         try:
-            # 移除 ngrok 或 domain，只保留相對路徑
+            # 確保從完整 URL 拆出 user_id, category, filename
             if "static/uploads/" in full_url:
-                rel_path = full_url.split("static/uploads/")[-1]  # Uae.../top/file.jpg
+                rel_path = full_url.split("static/uploads/")[-1]
             else:
                 continue
-
             parts = rel_path.split("/", 3)  # [user_id, category, filename]
             if len(parts) != 3:
                 continue
             _, category, filename = parts
 
-            # 刪除 DB 紀錄
             db.execute(
                 "DELETE FROM wardrobe WHERE user_id = ? AND category = ? AND filename = ?",
                 (user_id, category, filename)
             )
 
-            # 刪除實際檔案
             file_path = os.path.join(UPLOAD_FOLDER, user_id, category, filename)
             if os.path.exists(file_path):
                 os.remove(file_path)
@@ -120,7 +114,6 @@ def delete():
 
     db.commit()
     return jsonify({"status": "ok", "deleted": deleted})
-
 
 @app.route('/')
 def index():
