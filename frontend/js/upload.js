@@ -53,6 +53,8 @@ export async function loadWardrobe(userId) {
   try {
     const res = await fetch(`${backendURL}/wardrobe?user_id=${userId}`);
     const data = await res.json();
+
+    console.log("✅ 從後端取得圖片資料：", data); // 除錯：顯示回傳資料
     displayImages(data.images);
   } catch (err) {
     console.error("❌ 載入衣櫃失敗", err);
@@ -63,6 +65,8 @@ export async function loadWardrobe(userId) {
 function displayImages(images) {
   const container = document.getElementById('image-list');
   container.innerHTML = '';
+
+  console.log("📷 準備顯示圖片", images); // 除錯：顯示即將渲染的圖片資料
 
   images.forEach(img => {
     const div = document.createElement('div');
