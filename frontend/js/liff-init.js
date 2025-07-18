@@ -10,13 +10,15 @@ async function initializeLiff() {
     await liff.init({ liffId });
 
     if (!liff.isLoggedIn()) {
-      // iOS LINE App 避免登入卡住，加 redirectUri
+      // 修正 iOS：登入後回到目前頁面
       liff.login({ redirectUri: window.location.href });
       return;
     }
 
     const profile = await liff.getProfile();
     const userId = profile.userId;
+
+    // 儲存真正的 LINE userId（不再使用 demo_user）
     localStorage.setItem('user_id', userId);
 
     document.getElementById('user-name').innerText = profile.displayName;
