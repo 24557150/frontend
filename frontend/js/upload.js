@@ -123,19 +123,11 @@ async function deleteSelected() {
     });
 
     if (res.ok) {
-        const result = await res.json();
-        if (result.status === 'ok') {
-          const newImage = {
-            path: result.path,
-            category: result.category || category
-          };
-          displayImages([...document.querySelectorAll('#image-list img')].map(img => ({ 
-            path: img.src.replace(`${backendURL}`, ''), category: category 
-          })).concat(newImage));
-        }
-      } else {
-        console.error(`❌ 上傳失敗: ${file.name}`);
-      }
+      console.log("✅ 已刪除圖片");
+      await loadWardrobe(userId);
+    } else {
+      console.error("❌ 刪除失敗");
+    }
   } catch (err) {
     console.error("❌ 刪除錯誤:", err);
   }
