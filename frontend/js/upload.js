@@ -1,7 +1,10 @@
-export const backendURL = 'https://7d3e145bb3d0.ngrok-free.app'; // ✅ 你的 ngrok 或本機網址
+// frontend/js/upload.js
+
+export const backendURL = 'https://7d3e145bb3d0.ngrok-free.app';
 
 document.addEventListener('DOMContentLoaded', () => {
-  localStorage.setItem('user_id', 'demo_user'); // 測試用 user_id
+  localStorage.setItem('user_id', 'demo_user'); // 測試帳號
+
   document.getElementById('upload-button').addEventListener('click', uploadImages);
   document.getElementById('delete-button').addEventListener('click', deleteSelected);
   document.getElementById('all-button').addEventListener('click', () => filterCategory('all'));
@@ -55,7 +58,6 @@ export async function loadWardrobe(userId) {
   try {
     const res = await fetch(`${backendURL}/wardrobe?user_id=${userId}`);
     const data = await res.json();
-
     console.log("✅ 從後端取得圖片資料：", data);
     displayImages(data.images);
   } catch (err) {
@@ -72,14 +74,20 @@ function displayImages(images) {
     const fullPath = `${backendURL}${img.path}`;
     const category = img.category || 'unknown';
 
+    // 外層容器
     const wrapper = document.createElement("div");
     wrapper.className = `image-item ${category}`;
+    wrapper.style.display = "inline-block";
+    wrapper.style.margin = "10px";
+    wrapper.style.textAlign = "center";
 
+    // 圖片
     const imgElement = document.createElement("img");
     imgElement.src = fullPath;
     imgElement.style.width = "150px";
     imgElement.style.borderRadius = "8px";
 
+    // 勾選框
     const checkbox = document.createElement("input");
     checkbox.type = "checkbox";
     checkbox.dataset.path = img.path;
