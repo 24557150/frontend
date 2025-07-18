@@ -1,14 +1,16 @@
-// frontend/js/upload.js
-
-export const backendURL = 'https://7d3e145bb3d0.ngrok-free.app';
+export const backendURL = 'https://7d3e145bb3d0.ngrok-free.app'; // ✅ 你的 ngrok 或本機網址
 
 document.addEventListener('DOMContentLoaded', () => {
+  localStorage.setItem('user_id', 'demo_user'); // 測試用 user_id
   document.getElementById('upload-button').addEventListener('click', uploadImages);
   document.getElementById('delete-button').addEventListener('click', deleteSelected);
   document.getElementById('all-button').addEventListener('click', () => filterCategory('all'));
   document.getElementById('top-button').addEventListener('click', () => filterCategory('top'));
   document.getElementById('bottom-button').addEventListener('click', () => filterCategory('bottom'));
   document.getElementById('shoes-button').addEventListener('click', () => filterCategory('shoes'));
+
+  const userId = localStorage.getItem('user_id');
+  if (userId) loadWardrobe(userId);
 });
 
 // 上傳圖片到後端
@@ -44,8 +46,8 @@ async function uploadImages() {
     }
   }
 
-  await loadWardrobe(userId); // 重新載入衣櫃
-  input.value = ''; // 清空選取的檔案
+  await loadWardrobe(userId);
+  input.value = '';
 }
 
 // 載入使用者衣櫃
@@ -54,22 +56,38 @@ export async function loadWardrobe(userId) {
     const res = await fetch(`${backendURL}/wardrobe?user_id=${userId}`);
     const data = await res.json();
 
-    console.log("✅ 從後端取得圖片資料：", data); // 除錯：顯示回傳資料
+    console.log("✅ 從後端取得圖片資料：", data);
     displayImages(data.images);
   } catch (err) {
     console.error("❌ 載入衣櫃失敗", err);
   }
 }
 
+// 顯示圖片與 checkbox
 function displayImages(images) {
   const imageList = document.getElementById("image-list");
   imageList.innerHTML = "";
 
   images.forEach(img => {
+    const fullPath = `${backendURL}${img.path}`;
+    const category = img.category || 'unknown';
+
+    const wrapper = document.createElement("div");
+    wrapper.className = `image-item ${category}`;
+
     const imgElement = document.createElement("img");
-    imgElement.src = `${backendURL}${img.path}`; // ✅ 要補完整 ngrok 網址
+    imgElement.src = fullPath;
     imgElement.style.width = "150px";
-    imageList.appendChild(imgElement);
+    imgElement.style.borderRadius = "8px";
+
+    const checkbox = document.createElement("input");
+    checkbox.type = "checkbox";
+    checkbox.dataset.path = img.path;
+    checkbox.style.marginTop = "5px";
+
+    wrapper.appendChild(imgElement);
+    wrapper.appendChild(checkbox);
+    imageList.appendChild(wrapper);
   });
 }
 
@@ -77,7 +95,7 @@ function displayImages(images) {
 function filterCategory(category) {
   const allImages = document.querySelectorAll('.image-item');
   allImages.forEach(img => {
-    img.style.display = (category === 'all' || img.classList.contains(category)) ? 'block' : 'none';
+    img.style.display = (category === 'all' || img.classList.contains(category)) ? 'inline-block' : 'none';
   });
 }
 
