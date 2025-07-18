@@ -7,8 +7,9 @@ from werkzeug.utils import secure_filename
 app = Flask(__name__)
 CORS(app)
 
-UPLOAD_FOLDER = os.path.join("static", "uploads")
-DATABASE = os.path.join("database", "db.sqlite")
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+UPLOAD_FOLDER = os.path.join(BASE_DIR, "static", "uploads")
+DATABASE = os.path.join(BASE_DIR, "database", "db.sqlite")
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 def get_db():
@@ -41,8 +42,10 @@ def upload():
 
     rel_path = f"/static/uploads/{user_id}/{category}/{filename}".replace("\\", "/")
     db = get_db()
-    db.execute("INSERT INTO wardrobe (user_id, filename, category) VALUES (?, ?, ?)",
-               (user_id, filename, category))
+    db.execute(
+        "INSERT INTO wardrobe (user_id, filename, category) VALUES (?, ?, ?)",
+        (user_id, filename, category)
+    )
     db.commit()
 
     return jsonify({"status": "ok", "path": rel_path, "category": category})
@@ -91,9 +94,11 @@ def delete():
             if len(parts) < 3:
                 continue
             category, filename = parts[1], parts[2]
-            db.execute("DELETE FROM wardrobe WHERE user_id = ? AND category = ? AND filename = ?",
-                       (user_id, category, filename))
-            file_path = os.path.join("static", "uploads", user_id, category, filename)
+            db.execute(
+                "DELETE FROM wardrobe WHERE user_id = ? AND category = ? AND filename = ?",
+                (user_id, category, filename)
+            )
+            file_path = os.path.join(UPLOAD_FOLDER, user_id, category, filename)
             if os.path.exists(file_path):
                 os.remove(file_path)
             deleted += 1
