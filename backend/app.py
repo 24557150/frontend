@@ -34,7 +34,12 @@ def upload():
     user_id = request.form.get('user_id')
 
     if not image or not category or not user_id:
-        return jsonify({"status": "error", "message": "缺少必要參數"}), 400
+        return jsonify([
+        {
+            "path": os.path.join(base_url, row['category'], row['filename']).replace("\", "/"),
+            "category": row['category']
+        } for row in rows
+    ]), 400
 
     # 確保目錄存在
     save_dir = os.path.join(UPLOAD_FOLDER, user_id, category)
@@ -53,7 +58,12 @@ def upload():
     )
     db.commit()
 
-    return jsonify({"status": "ok", "path": rel_path, "category": category})
+    return jsonify([
+        {
+            "path": os.path.join(base_url, row['category'], row['filename']).replace("\", "/"),
+            "category": row['category']
+        } for row in rows
+    ])
 
 # 取得衣櫃圖片清單 API
 @app.route('/wardrobe', methods=['GET'])
@@ -62,7 +72,12 @@ def wardrobe():
     category = request.args.get('category')
 
     if not user_id:
-        return jsonify({"status": "error", "message": "缺少 user_id"}), 400
+        return jsonify([
+        {
+            "path": os.path.join(base_url, row['category'], row['filename']).replace("\", "/"),
+            "category": row['category']
+        } for row in rows
+    ]), 400
 
     db = get_db()
     query = "SELECT filename, category FROM wardrobe WHERE user_id = ?"
@@ -91,7 +106,12 @@ def delete():
     paths = data.get('paths', [])
 
     if not user_id or not paths:
-        return jsonify({"status": "error", "message": "缺少 user_id 或 paths"}), 400
+        return jsonify([
+        {
+            "path": os.path.join(base_url, row['category'], row['filename']).replace("\", "/"),
+            "category": row['category']
+        } for row in rows
+    ]), 400
 
     db = get_db()
     deleted = 0
@@ -119,7 +139,12 @@ def delete():
             print("刪除失敗:", e)
 
     db.commit()
-    return jsonify({"status": "ok", "deleted": deleted})
+    return jsonify([
+        {
+            "path": os.path.join(base_url, row['category'], row['filename']).replace("\", "/"),
+            "category": row['category']
+        } for row in rows
+    ])
 
 # 測試首頁
 @app.route('/')
