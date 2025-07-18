@@ -1,37 +1,48 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
-  <meta charset="UTF-8">
-  <title>衣櫃上傳系統</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <title>👚 衣櫃上傳</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="frontend/style.css">
   <style>
-    body { font-family: Arial, sans-serif; max-width: 800px; margin: auto; padding: 20px; text-align: center; }
-    #image-list img { border-radius: 8px; border: 1px solid #ccc; margin: 5px; }
-    .image-item { display: inline-block; margin: 10px; text-align: center; }
-    button { margin: 5px; padding: 8px 12px; }
+    #image-list img { border-radius: 8px; border: 1px solid #ccc; padding: 2px; }
+    .image-item { display: flex; flex-direction: column; align-items: center; }
   </style>
 </head>
 <body>
-  <h2>👤 使用者衣櫃</h2>
-  <p id="status-text">登入後可管理衣櫃</p>
+  <div style="max-width: 600px; margin: 20px auto; text-align: center;">
+    <h2>👤 <span id="user-name">尚未登入</span></h2>
 
-  <!-- 圖片選擇 -->
-  <input type="file" id="image-input" accept="image/*" multiple style="display:none;">
-  <select id="category">
-    <option value="top">上衣</option>
-    <option value="bottom">褲子</option>
-    <option value="shoes">鞋子</option>
-  </select>
-  <button id="upload-button">上傳圖片</button>
-  <button id="delete-button">刪除已選圖片</button>
-  <br>
-  <button id="all-button">全部</button>
-  <button id="top-button">上衣</button>
-  <button id="bottom-button">褲子</button>
-  <button id="shoes-button">鞋子</button>
+    <div>
+      <input type="file" id="image-input" accept="image/*" multiple style="display:none;" />
+      <button type="button" onclick="openImageSourceSelector()">📷 選擇圖片 (本機 / LINE 拍照/相簿)</button>
+    </div>
 
-  <div id="image-list" style="margin-top:20px;"></div>
+    <select id="category" style="margin-top: 10px;">
+      <option value="top">上衣</option>
+      <option value="bottom">下身</option>
+      <option value="shoes">鞋子</option>
+    </select>
+    <button id="upload-button" type="button" style="margin-left: 10px;">上傳</button>
 
-  <script type="module" src="upload.js"></script>
+    <div id="status" style="margin-top: 10px; font-weight: bold;">🔄 等待登入...</div>
+    <hr>
+
+    <div class="category-buttons" style="margin-bottom: 10px;">
+      <button id="all-button">全部</button>
+      <button id="top-button">只看上衣</button>
+      <button id="bottom-button">只看下身</button>
+      <button id="shoes-button">只看鞋子</button>
+      <button id="delete-button">刪除選取圖片</button>
+    </div>
+
+    <div id="image-list" style="display: flex; flex-wrap: wrap; gap: 10px; justify-content: center;"></div>
+  </div>
+
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <script type="module" src="frontend/js/liff-init.js"></script>
+  <script type="module" src="frontend/js/upload.js"></script>
+  <script>function openImageSourceSelector() { document.getElementById('image-input').click(); }</script>
 </body>
 </html>
