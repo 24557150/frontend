@@ -60,7 +60,7 @@ def upload():
 
     return jsonify([
         {
-            "path": os.path.join(base_url, row['category'], row['filename']).replace("\", "/"),
+            "path": os.path.join(base_url, row['category'], row['filename']).replace("\\", "/"),
             "category": row['category']
         } for row in rows
     ])
@@ -74,7 +74,7 @@ def wardrobe():
     if not user_id:
         return jsonify([
         {
-            "path": os.path.join(base_url, row['category'], row['filename']).replace("\", "/"),
+            "path": os.path.join(base_url, row['category'], row['filename']).replace("\\", "/"),
             "category": row['category']
         } for row in rows
     ]), 400
@@ -108,7 +108,7 @@ def delete():
     if not user_id or not paths:
         return jsonify([
         {
-            "path": os.path.join(base_url, row['category'], row['filename']).replace("\", "/"),
+            "path": os.path.join(base_url, row['category'], row['filename']).replace("\\", "/"),
             "category": row['category']
         } for row in rows
     ]), 400
@@ -141,7 +141,7 @@ def delete():
     db.commit()
     return jsonify([
         {
-            "path": os.path.join(base_url, row['category'], row['filename']).replace("\", "/"),
+            "path": os.path.join(base_url, row['category'], row['filename']).replace("\\", "/"),
             "category": row['category']
         } for row in rows
     ])
