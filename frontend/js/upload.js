@@ -1,4 +1,4 @@
-export const backendURL = 'https://a7946680e883.ngrok-free.app';
+export const backendURL = 'https://a7946680e883.ngrok-free.app'; // 這裡必須換成你目前 ngrok 的網址
 
 document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('upload-button').addEventListener('click', uploadImages);
@@ -65,7 +65,10 @@ function displayImages(images) {
   });
 
   images.forEach(img => {
-    const fullPath = `${backendURL}${img.path}`;
+    const fullPath = img.path.startsWith('http')
+      ? img.path
+      : `${backendURL}${img.path}`;
+
     const container = document.getElementById(`${img.category}-container`);
     if (!container) return;
 
