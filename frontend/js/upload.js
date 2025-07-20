@@ -3,10 +3,10 @@ export const backendURL = 'https://a7946680e883.ngrok-free.app';
 document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('upload-button').addEventListener('click', uploadImages);
   document.getElementById('delete-button').addEventListener('click', deleteSelected);
-  document.getElementById('all-button').addEventListener('click', () => filterCategory('all'));
-  document.getElementById('top-button').addEventListener('click', () => filterCategory('top'));
-  document.getElementById('bottom-button').addEventListener('click', () => filterCategory('bottom'));
-  document.getElementById('shoes-button').addEventListener('click', () => filterCategory('shoes'));
+
+  ['all', 'top', 'bottom', 'skirt', 'dress', 'shoes'].forEach(cat => {
+    document.getElementById(`${cat}-button`).addEventListener('click', () => filterCategory(cat));
+  });
 
   const userId = localStorage.getItem('user_id');
   if (userId) loadWardrobe(userId);
@@ -29,14 +29,12 @@ async function uploadImages() {
     formData.append('user_id', userId);
 
     try {
-      const res = await fetch(`${backendURL}/upload`, {
+      await fetch(`${backendURL}/upload`, {
         method: 'POST',
         body: formData,
         headers: { 'ngrok-skip-browser-warning': 'any' },
         credentials: 'include'
       });
-      const json = await res.json();
-      if (!res.ok || json.status !== "ok") console.error(`❌ 上傳失敗: ${file.name}`, json);
     } catch (err) {
       alert("⚠️ 後端連線失敗，請檢查 ngrok 是否啟動");
       console.error('❌ 上傳錯誤:', err);
@@ -52,14 +50,8 @@ export async function loadWardrobe(userId) {
       headers: { 'ngrok-skip-browser-warning': 'any' },
       credentials: 'include'
     });
-    const text = await res.text();
-    try {
-      const data = JSON.parse(text);
-      displayImages(data.images);
-    } catch (e) {
-      alert("⚠️ 後端回應錯誤，請確認 ngrok URL 是否正確啟動");
-      console.error("❌ API 回應非 JSON:", text);
-    }
+    const data = await res.json();
+    displayImages(data.images);
   } catch (err) {
     alert("⚠️ 無法連接後端，請檢查 ngrok 是否運行");
     console.error("❌ 載入衣櫃失敗", err);
@@ -67,16 +59,20 @@ export async function loadWardrobe(userId) {
 }
 
 function displayImages(images) {
-  const imageList = document.getElementById("image-list");
-  imageList.innerHTML = "";
+  const categories = ['top', 'bottom', 'skirt', 'dress', 'shoes'];
+  categories.forEach(cat => {
+    document.getElementById(`${cat}-container`).innerHTML = "";
+  });
 
   images.forEach(img => {
     const fullPath = `${backendURL}${img.path}`;
+    const container = document.getElementById(`${img.category}-container`);
+    if (!container) return;
 
     const wrapper = document.createElement("div");
     wrapper.className = `image-item ${img.category}`;
     wrapper.style.display = "inline-block";
-    wrapper.style.margin = "10px";
+    wrapper.style.margin = "5px";
     wrapper.style.textAlign = "center";
 
     const imgElement = document.createElement("img");
@@ -91,14 +87,14 @@ function displayImages(images) {
 
     wrapper.appendChild(imgElement);
     wrapper.appendChild(checkbox);
-    imageList.appendChild(wrapper);
+    container.appendChild(wrapper);
   });
 }
 
 function filterCategory(category) {
-  const allImages = document.querySelectorAll('.image-item');
-  allImages.forEach(img => {
-    img.style.display = (category === 'all' || img.classList.contains(category)) ? 'inline-block' : 'none';
+  const allSections = document.querySelectorAll('.category-section');
+  allSections.forEach(sec => {
+    sec.style.display = (category === 'all' || sec.id.startsWith(category)) ? 'block' : 'none';
   });
 }
 
@@ -110,7 +106,7 @@ async function deleteSelected() {
   if (!paths.length) return alert('請選擇要刪除的圖片');
 
   try {
-    const res = await fetch(`${backendURL}/delete`, {
+    await fetch(`${backendURL}/delete`, {
       method: 'POST',
       headers: {
         'ngrok-skip-browser-warning': 'any',
@@ -119,14 +115,9 @@ async function deleteSelected() {
       credentials: 'include',
       body: JSON.stringify({ user_id: userId, paths })
     });
-    const json = await res.json();
-    if (res.ok && json.status === "ok") {
-      await loadWardrobe(userId);
-    } else {
-      console.error("❌ 刪除失敗:", json);
-    }
+    await loadWardrobe(userId);
   } catch (err) {
-    alert("⚠️ 無法連接後端，請檢查 ngrok 是否運行");
+    alert("⚠️ 無法連接後端");
     console.error("❌ 刪除錯誤:", err);
   }
 }
