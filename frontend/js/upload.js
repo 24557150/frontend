@@ -1,4 +1,4 @@
-export const backendURL = 'https://b58bf88c77ed.ngrok-free.app';
+export const backendURL = 'https://a7946680e883.ngrok-free.app';
 
 document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('upload-button').addEventListener('click', uploadImages);
