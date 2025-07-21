@@ -1,4 +1,5 @@
-export const backendURL = 'https://15d8e02b0411.ngrok-free.app'; // 這裡必須換成你目前 ngrok 的網址
+// frontend/js/upload.js
+export const backendURL = 'https://15d8e02b0411.ngrok-free.app';
 
 document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('upload-button').addEventListener('click', uploadImages);
@@ -65,9 +66,7 @@ function displayImages(images) {
   });
 
   images.forEach(img => {
-    const fullPath = img.path.startsWith('http')
-      ? img.path
-      : `${backendURL}${img.path}`;
+    const fullPath = `${backendURL}${img.path}`; // 確保完整 URL
 
     const container = document.getElementById(`${img.category}-container`);
     if (!container) return;
@@ -85,7 +84,7 @@ function displayImages(images) {
 
     const checkbox = document.createElement("input");
     checkbox.type = "checkbox";
-    checkbox.dataset.path = fullPath;
+    checkbox.dataset.path = img.path;  // 使用相對路徑，避免刪除 API 出錯
     checkbox.style.marginTop = "5px";
 
     wrapper.appendChild(imgElement);
