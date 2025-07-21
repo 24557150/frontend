@@ -1,5 +1,5 @@
 // frontend/js/liff-init.js
-export const backendURL = 'https://15d8e02b0411.ngrok-free.app';
+export const backendURL = 'https://liff-test-9xse.onrender.com';
 
 import { loadWardrobe } from './upload.js';
 

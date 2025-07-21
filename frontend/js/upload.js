@@ -1,5 +1,5 @@
 // frontend/js/upload.js
-export const backendURL = 'https://15d8e02b0411.ngrok-free.app'; // 改成 ngrok 提供的最新 URL
+export const backendURL = 'https://liff-test-9xse.onrender.com'; // 改成 ngrok 提供的最新 URL
 
 document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('upload-button').addEventListener('click', uploadImages);
