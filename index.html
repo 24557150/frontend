@@ -1,41 +1,33 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>👚 衣櫃上傳</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="stylesheet" href="frontend/style.css">
   <style>
     .image-item { display: inline-block; margin: 10px; text-align: center; }
-    .caption-text { font-size: 14px; margin-top: 4px; color: #555; max-width: 150px; word-wrap: break-word; }
-    #image-list img { width: 150px; border-radius: 8px; }
+    .image-item img { width: 150px; border-radius: 8px; }
+    .caption { margin-top: 5px; font-size: 14px; color: #555; }
   </style>
 </head>
 <body>
-  <div style="max-width:600px;margin:20px auto;text-align:center;">
+  <div style="max-width: 600px; margin: 20px auto; text-align: center;">
     <h2>👤 <span id="user-name">尚未登入</span></h2>
     <div>
-      <input type="file" id="image-input" accept="image/*" multiple style="display:none;">
+      <input type="file" id="image-input" accept="image/*" multiple style="display:none;" />
       <button type="button" onclick="openImageSourceSelector()">📷 選擇圖片 (本機 / LINE 拍照/相簿)</button>
     </div>
-    <select id="category" style="margin-top:10px;">
+    <select id="category" style="margin-top: 10px;">
       <option value="top">上衣</option>
-      <option value="bottom">褲子</option>
-      <option value="skirt">裙子</option>
+      <option value="pants">褲子</option>
       <option value="dress">洋裝</option>
+      <option value="skirt">裙子</option>
       <option value="shoes">鞋子</option>
     </select>
     <button id="upload-button">上傳</button>
-    <div id="filters" style="margin-top:15px;">
-      <button onclick="filterCategory('all')">全部</button>
-      <button onclick="filterCategory('top')">上衣</button>
-      <button onclick="filterCategory('bottom')">褲子</button>
-      <button onclick="filterCategory('skirt')">裙子</button>
-      <button onclick="filterCategory('dress')">洋裝</button>
-      <button onclick="filterCategory('shoes')">鞋子</button>
-    </div>
-    <div id="image-list" style="margin-top:20px;"></div>
+    <div id="image-list"></div>
   </div>
-  <script src="upload.js"></script>
+  <script src="frontend/upload.js"></script>
 </body>
 </html>
