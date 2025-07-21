@@ -2,7 +2,7 @@ from flask import Flask, request, jsonify, g
 from flask_cors import CORS
 import os, sqlite3
 from werkzeug.utils import secure_filename
-from huggingface_hub import InferenceClient  # 新增
+from huggingface_hub import InferenceClient
 
 app = Flask(__name__, static_folder="static", static_url_path="/static")
 CORS(app, supports_credentials=True)
@@ -14,16 +14,18 @@ DATABASE = os.path.join(DB_DIR, "db.sqlite")
 os.makedirs(DB_DIR, exist_ok=True)
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
-# 初始化 Hugging Face InferenceClient
-BLIP_CLIENT = InferenceClient("yushon/blip-caption-service")  # 換成你的 Space 名稱
+# 初始化 Hugging Face Space 客戶端
+BLIP_CLIENT = InferenceClient("yushon/blip-caption-service")
 
 def get_caption(image_path):
     try:
         with open(image_path, "rb") as f:
-            result = BLIP_CLIENT.post("/predict", data={"data": [f.read()]})
+            # 直接呼叫 Space 的第一個函式 (fn_index=0)
+            result = BLIP_CLIENT.predict(f.read(), fn_index=0)
         caption = ""
-        if isinstance(result, dict) and "data" in result and isinstance(result["data"], list):
-            caption = result["data"][0]
+        # BLIP Space 回傳的是 list，取第一個元素
+        if isinstance(result, list) and len(result) > 0:
+            caption = result[0]
         print(f"[DEBUG] Caption result: {caption}")
         return caption
     except Exception as e:
@@ -67,10 +69,14 @@ def upload():
     filename = secure_filename(image.filename)
     filepath = os.path.join(save_dir, filename)
     image.save(filepath)
+    # 生成 caption
     tags = get_caption(filepath)
     rel_path = f"/static/uploads/{user_id}/{category}/{filename}".replace("\\", "/")
     db = get_db()
-    db.execute("INSERT INTO wardrobe (user_id, filename, category, tags) VALUES (?, ?, ?, ?)", (user_id, filename, category, tags))
+    db.execute(
+        "INSERT INTO wardrobe (user_id, filename, category, tags) VALUES (?, ?, ?, ?)",
+        (user_id, filename, category, tags)
+    )
     db.commit()
     return jsonify({"status": "ok", "path": rel_path, "category": category, "tags": tags})
 
@@ -87,10 +93,15 @@ def wardrobe():
         query += " AND category = ?"
         params.append(category)
     rows = db.execute(query, params).fetchall()
-    return jsonify({"images": [
-        {"path": f"/static/uploads/{user_id}/{row['category']}/{row['filename']}",
-         "category": row['category'], "tags": row['tags'] or ''} for row in rows
-    ]})
+    return jsonify({
+        "images": [
+            {
+                "path": f"/static/uploads/{user_id}/{row['category']}/{row['filename']}",
+                "category": row['category'],
+                "tags": row['tags'] or ''
+            } for row in rows
+        ]
+    })
 
 @app.route('/delete', methods=['POST'])
 def delete():
@@ -108,8 +119,10 @@ def delete():
             if len(parts) == 3:
                 u_id, category, filename = parts
                 if u_id == user_id:
-                    db.execute("DELETE FROM wardrobe WHERE user_id=? AND category=? AND filename=?",
-                               (user_id, category, filename))
+                    db.execute(
+                        "DELETE FROM wardrobe WHERE user_id=? AND category=? AND filename=?",
+                        (user_id, category, filename)
+                    )
                     file_path = os.path.join(UPLOAD_FOLDER, user_id, category, filename)
                     if os.path.exists(file_path):
                         os.remove(file_path)
