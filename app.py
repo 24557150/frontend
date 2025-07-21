@@ -15,14 +15,24 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 BLIP_API_URL = "https://yushon-blip-caption-service.hf.space/run/predict"
 
+# 修正版 get_caption
 def get_caption(image_path):
-    files = {'data': (os.path.basename(image_path), open(image_path, 'rb'), 'image/png')}
     try:
-        response = requests.post(BLIP_API_URL, files=files, timeout=60)
+        with open(image_path, "rb") as f:
+            response = requests.post(
+                BLIP_API_URL,
+                files={"data": f},        # Gradio API 預期 key
+                data={"fn_index": 0},     # 指定第一個介面
+                timeout=60
+            )
         result = response.json()
-        return result.get("data", [""])[0]
+        caption = ""
+        if isinstance(result, dict) and "data" in result and isinstance(result["data"], list):
+            caption = result["data"][0]
+        print(f"[DEBUG] Caption result: {caption}")
+        return caption
     except Exception as e:
-        print(f"BLIP API 調用錯誤: {e}")
+        print(f"[ERROR] BLIP API 調用錯誤: {e}")
         return ""
 
 def get_db():
