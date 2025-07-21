@@ -3,22 +3,21 @@ export const backendURL = 'https://liff-test-9xse.onrender.com';
 
 import { loadWardrobe } from './upload.js';
 
-const liffId = "2007733246-nAexA2b9";
+const liffId = "2007733246-nAexA2b9"; // 你現有的 LIFF ID
 
 async function initializeLiff() {
   try {
     await liff.init({ liffId });
 
     if (!liff.isLoggedIn()) {
-      // iOS 登入修正：登入後回到目前頁面
-      liff.login({ redirectUri: window.location.href });
+      // 使用固定 GitHub Pages 網址，避免 iOS 無法登入
+      liff.login({ redirectUri: "https://24557150.github.io/liff-test/" });
       return;
     }
 
     const profile = await liff.getProfile();
     const userId = profile.userId;
 
-    // 儲存 LINE userId
     localStorage.setItem('user_id', userId);
 
     document.getElementById('user-name').innerText = profile.displayName;
