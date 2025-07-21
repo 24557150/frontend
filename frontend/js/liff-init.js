@@ -1,5 +1,5 @@
 // frontend/js/liff-init.js
-export const backendURL = 'https://a7946680e883.ngrok-free.app';
+export const backendURL = 'https://15d8e02b0411.ngrok-free.app';
 
 import { loadWardrobe } from './upload.js';
 
