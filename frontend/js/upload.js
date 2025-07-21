@@ -79,7 +79,9 @@ function displayImages(images) {
 
     const imgElement = document.createElement("img");
     imgElement.src = fullPath;
-    imgElement.style.width = "100px";
+    imgElement.style.width = "150px";
+    imgElement.style.height = "150px";
+    imgElement.style.objectFit = "cover";
     imgElement.style.borderRadius = "8px";
 
     const checkbox = document.createElement("input");
