@@ -1,10 +1,10 @@
-from flask import Flask, request, jsonify, g
+from flask import Flask, request, jsonify, g, send_from_directory
 from flask_cors import CORS
 import os
 import sqlite3
 from werkzeug.utils import secure_filename
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder="static", static_url_path="/static")
 CORS(app, supports_credentials=True)  # 允許跨來源，支援 LINE WebView
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -12,6 +12,7 @@ UPLOAD_FOLDER = os.path.join(BASE_DIR, "static", "uploads")
 DATABASE = os.path.join(BASE_DIR, "database", "db.sqlite")
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
+# === 資料庫連線 ===
 def get_db():
     if 'db' not in g:
         g.db = sqlite3.connect(DATABASE)
@@ -24,6 +25,7 @@ def close_db(exception=None):
     if db is not None:
         db.close()
 
+# === 上傳 API ===
 @app.route('/upload', methods=['POST'])
 def upload():
     image = request.files.get('image')
@@ -40,6 +42,7 @@ def upload():
     filepath = os.path.join(save_dir, filename)
     image.save(filepath)
 
+    # 儲存在 DB 的路徑，不重複加 static
     rel_path = f"/static/uploads/{user_id}/{category}/{filename}".replace("\\", "/")
     db = get_db()
     db.execute(
@@ -50,6 +53,7 @@ def upload():
 
     return jsonify({"status": "ok", "path": rel_path, "category": category})
 
+# === 讀取衣櫃 API ===
 @app.route('/wardrobe', methods=['GET'])
 def wardrobe():
     user_id = request.args.get('user_id')
@@ -76,6 +80,7 @@ def wardrobe():
         ]
     })
 
+# === 刪除 API ===
 @app.route('/delete', methods=['POST'])
 def delete():
     data = request.get_json()
@@ -87,39 +92,33 @@ def delete():
 
     db = get_db()
     deleted = 0
-    for full_url in paths:
+    for rel_path in paths:
         try:
-            if "static/uploads/" not in full_url:
-                continue
-            rel_path = full_url.split("static/uploads/")[-1]  # user_id/category/filename
-
-            parts = rel_path.split("/", 2)  # 確保三層
-            if len(parts) != 3:
-                continue
-            u_id, category, filename = parts
-
-            if u_id != user_id:
-                continue
-
-            db.execute(
-                "DELETE FROM wardrobe WHERE user_id = ? AND category = ? AND filename = ?",
-                (user_id, category, filename)
-            )
-
-            file_path = os.path.join(UPLOAD_FOLDER, user_id, category, filename)
-            if os.path.exists(file_path):
-                os.remove(file_path)
-
-            deleted += 1
+            # paths 傳來的是 /static/uploads/...，去掉前綴
+            if rel_path.startswith("/static/uploads/"):
+                rel = rel_path[len("/static/uploads/"):]
+                parts = rel.split("/", 2)  # user_id/category/filename
+                if len(parts) == 3:
+                    u_id, category, filename = parts
+                    if u_id == user_id:
+                        db.execute(
+                            "DELETE FROM wardrobe WHERE user_id = ? AND category = ? AND filename = ?",
+                            (user_id, category, filename)
+                        )
+                        file_path = os.path.join(UPLOAD_FOLDER, user_id, category, filename)
+                        if os.path.exists(file_path):
+                            os.remove(file_path)
+                        deleted += 1
         except Exception as e:
-            print("刪除失敗:", e)
+            print("刪除錯誤:", e)
 
     db.commit()
     return jsonify({"status": "ok", "deleted": deleted})
 
+# 測試用首頁
 @app.route('/')
 def index():
     return jsonify({"status": "running", "message": "Flask 伺服器運行中"})
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(host="0.0.0.0", port=5000, debug=True)  # 開放外部連線
