@@ -86,30 +86,13 @@
 
   <!-- LIFF SDK -->
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <!-- 確保先載入 liff-init.js -->
+  <script type="module" src="frontend/js/liff-init.js"></script>
+  <script type="module" src="frontend/js/upload.js"></script>
   <script>
-    async function initLiff() {
-      try {
-        await liff.init({ liffId: "2007733246-nAexA2b9" });
-        if (!liff.isLoggedIn()) {
-          liff.login();
-          return;
-        }
-        const profile = await liff.getProfile();
-        document.getElementById('user-name').innerText = profile.displayName;
-        document.getElementById('status').innerText = "✅ 已登入";
-        localStorage.setItem('user_id', profile.userId);
-        if (window.loadWardrobe) window.loadWardrobe(profile.userId);
-      } catch (err) {
-        console.error("LIFF 初始化失敗:", err);
-        document.getElementById('status').innerText = "❌ 無法登入 LINE";
-      }
-    }
-    initLiff();
     function openImageSourceSelector() {
       document.getElementById('image-input').click();
     }
   </script>
-
-  <script type="module" src="frontend/js/upload.js"></script>
 </body>
 </html>
