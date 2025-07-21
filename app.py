@@ -1,8 +1,7 @@
 from flask import Flask, request, jsonify, g
 from flask_cors import CORS
-import os, sqlite3, base64
+import os, sqlite3, base64, requests
 from werkzeug.utils import secure_filename
-from huggingface_hub import InferenceClient
 
 app = Flask(__name__, static_folder="static", static_url_path="/static")
 CORS(app, supports_credentials=True)
@@ -14,8 +13,8 @@ DATABASE = os.path.join(DB_DIR, "db.sqlite")
 os.makedirs(DB_DIR, exist_ok=True)
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
-# 初始化 Hugging Face Space 客戶端
-BLIP_CLIENT = InferenceClient("yushon/blip-caption-service")
+# Hugging Face Space API
+BLIP_API_URL = "https://yushon-blip-caption-service.hf.space/run/predict"
 
 def get_caption(image_path):
     try:
@@ -23,12 +22,12 @@ def get_caption(image_path):
             img_bytes = f.read()
         img_b64 = base64.b64encode(img_bytes).decode("utf-8")
 
-        # 正確觸發 Gradio Space 的 /predict API
-        result = BLIP_CLIENT.post_json(
-            "/predict",
-            {"data": [f"data:image/png;base64,{img_b64}"], "fn_index": 0}
-        )
+        # 用 requests.post 發送 Base64 圖片給 Hugging Face Space
+        response = requests.post(BLIP_API_URL, json={
+            "data": [f"data:image/png;base64,{img_b64}"]
+        }, timeout=60)
 
+        result = response.json()
         caption = ""
         if isinstance(result, dict) and "data" in result and isinstance(result["data"], list):
             caption = result["data"][0]
@@ -70,12 +69,17 @@ def upload():
     user_id = request.form.get('user_id')
     if not image or not category or not user_id:
         return jsonify({"status": "error", "message": "缺少必要參數"}), 400
+
     save_dir = os.path.join(UPLOAD_FOLDER, user_id, category)
     os.makedirs(save_dir, exist_ok=True)
+
     filename = secure_filename(image.filename)
     filepath = os.path.join(save_dir, filename)
     image.save(filepath)
+
+    # 調用 BLIP 模型生成 caption
     tags = get_caption(filepath)
+
     rel_path = f"/static/uploads/{user_id}/{category}/{filename}".replace("\\", "/")
     db = get_db()
     db.execute(
@@ -83,6 +87,7 @@ def upload():
         (user_id, filename, category, tags)
     )
     db.commit()
+
     return jsonify({"status": "ok", "path": rel_path, "category": category, "tags": tags})
 
 @app.route('/wardrobe', methods=['GET'])
@@ -91,6 +96,7 @@ def wardrobe():
     category = request.args.get('category')
     if not user_id:
         return jsonify({"status": "error", "message": "缺少 user_id"}), 400
+
     db = get_db()
     query = "SELECT filename, category, tags FROM wardrobe WHERE user_id = ?"
     params = [user_id]
@@ -98,6 +104,7 @@ def wardrobe():
         query += " AND category = ?"
         params.append(category)
     rows = db.execute(query, params).fetchall()
+
     return jsonify({
         "images": [
             {
@@ -115,6 +122,7 @@ def delete():
     paths = data.get('paths', [])
     if not user_id or not paths:
         return jsonify({"status": "error", "message": "缺少 user_id 或 paths"}), 400
+
     db = get_db()
     deleted = 0
     for rel_path in paths:
