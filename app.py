@@ -1,6 +1,6 @@
 from flask import Flask, request, jsonify, g
 from flask_cors import CORS
-import os, sqlite3
+import os, sqlite3, base64
 from werkzeug.utils import secure_filename
 from huggingface_hub import InferenceClient
 
@@ -20,12 +20,18 @@ BLIP_CLIENT = InferenceClient("yushon/blip-caption-service")
 def get_caption(image_path):
     try:
         with open(image_path, "rb") as f:
-            # 直接呼叫 Space 的第一個函式 (fn_index=0)
-            result = BLIP_CLIENT.predict(f.read(), fn_index=0)
+            img_bytes = f.read()
+        img_b64 = base64.b64encode(img_bytes).decode("utf-8")
+
+        # 正確觸發 Gradio Space 的 /predict API
+        result = BLIP_CLIENT.post_json(
+            "/predict",
+            {"data": [f"data:image/png;base64,{img_b64}"], "fn_index": 0}
+        )
+
         caption = ""
-        # BLIP Space 回傳的是 list，取第一個元素
-        if isinstance(result, list) and len(result) > 0:
-            caption = result[0]
+        if isinstance(result, dict) and "data" in result and isinstance(result["data"], list):
+            caption = result["data"][0]
         print(f"[DEBUG] Caption result: {caption}")
         return caption
     except Exception as e:
@@ -69,7 +75,6 @@ def upload():
     filename = secure_filename(image.filename)
     filepath = os.path.join(save_dir, filename)
     image.save(filepath)
-    # 生成 caption
     tags = get_caption(filepath)
     rel_path = f"/static/uploads/{user_id}/{category}/{filename}".replace("\\", "/")
     db = get_db()
