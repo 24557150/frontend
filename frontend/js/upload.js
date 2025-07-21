@@ -1,64 +1,102 @@
-export const backendURL = 'https://liff-test-9xse.onrender.com';
+const backendURL = "https://你的-render-backend-url";  // 請改成 Render 的後端網址
+let userId = "";
 
+// LIFF 自動登入（假設已經初始化過）
 document.addEventListener('DOMContentLoaded', () => {
+  // 這裡替換為你的 LIFF 登入流程，並取得 userId
+  userId = "測試用戶"; // 假資料，實際請從 LIFF 拿 userId
+  document.getElementById('user-name').innerText = userId;
+
+  loadWardrobe();
+
   document.getElementById('upload-button').addEventListener('click', uploadImages);
   document.getElementById('delete-button').addEventListener('click', deleteSelected);
-  ['all', 'top', 'bottom', 'skirt', 'dress', 'shoes'].forEach(cat => {
-    document.getElementById(`${cat}-button`).addEventListener('click', () => filterCategory(cat));
-  });
-  const userId = localStorage.getItem('user_id');
-  if (userId) loadWardrobe(userId);
+
+  document.getElementById('all-button').addEventListener('click', () => loadWardrobe("all"));
+  document.getElementById('top-button').addEventListener('click', () => loadWardrobe("top"));
+  document.getElementById('bottom-button').addEventListener('click', () => loadWardrobe("pants"));
+  document.getElementById('skirt-button').addEventListener('click', () => loadWardrobe("skirt"));
+  document.getElementById('dress-button').addEventListener('click', () => loadWardrobe("dress"));
+  document.getElementById('shoes-button').addEventListener('click', () => loadWardrobe("shoes"));
 });
 
-async function uploadImages() {
-  const input = document.getElementById('image-input');
+function openImageSourceSelector() {
+  document.getElementById('image-input').click();
+}
+
+function uploadImages() {
+  const files = document.getElementById('image-input').files;
   const category = document.getElementById('category').value;
-  const userId = localStorage.getItem('user_id');
-  if (!input.files.length || !category || !userId) { alert('請選擇圖片與分類，並確認已登入'); return; }
-  for (const file of input.files) {
+  if (!files.length) {
+    alert("請選擇圖片");
+    return;
+  }
+  for (let file of files) {
     const formData = new FormData();
     formData.append('image', file);
     formData.append('category', category);
     formData.append('user_id', userId);
-    try { 
-      await fetch(`${backendURL}/upload`, { method: 'POST', body: formData, headers: { 'ngrok-skip-browser-warning': 'any' }, credentials: 'include' });
-    } catch (err) { 
-      alert("⚠️ 後端連線失敗，請檢查 ngrok 是否啟動"); 
-      console.error('❌ 上傳錯誤:', err); 
-    }
+
+    fetch(`${backendURL}/upload`, {
+      method: "POST",
+      body: formData
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.status === "ok") {
+        loadWardrobe();
+      } else {
+        alert("上傳失敗");
+      }
+    })
+    .catch(err => console.error("上傳錯誤:", err));
   }
-  await loadWardrobe(userId);
-  input.value = '';
 }
 
-export async function loadWardrobe(userId) {
-  try {
-    const res = await fetch(`${backendURL}/wardrobe?user_id=${userId}`, { headers: { 'ngrok-skip-browser-warning': 'any' }, credentials: 'include' });
-    const data = await res.json();
-    displayImages(data.images);
-  } catch (err) {
-    alert("⚠️ 無法連接後端，請檢查 ngrok 是否運行");
-    console.error("❌ 載入衣櫃失敗", err);
-  }
+function loadWardrobe(category = "all") {
+  fetch(`${backendURL}/wardrobe?user_id=${userId}&category=${category}`)
+    .then(res => res.json())
+    .then(data => displayImages(data.images))
+    .catch(err => console.error("載入錯誤:", err));
 }
 
 function displayImages(images) {
-  const categories = ['top', 'bottom', 'skirt', 'dress', 'shoes'];
-  categories.forEach(cat => { document.getElementById(`${cat}-container`).innerHTML = ""; });
+  const imageList = document.getElementById("image-list");
+  imageList.innerHTML = "";
+
   images.forEach(img => {
     const fullPath = `${backendURL}${img.path}`;
-    const container = document.getElementById(`${img.category}-container`);
-    if (!container) return;
     const wrapper = document.createElement("div");
     wrapper.className = `image-item ${img.category}`;
-    wrapper.style.display = "inline-block";
-    wrapper.style.margin = "5px";
-    wrapper.style.textAlign = "center";
+
     const imgElement = document.createElement("img");
     imgElement.src = fullPath;
-    imgElement.style.width = "150px";
-    imgElement.style.height = "150px";
-    imgElement.style.objectFit = "cover";
-    imgElement.style.borderRadius = "8px";
+
     const caption = document.createElement("div");
-    caption.className = "capt
+    caption.className = "caption-text";
+    caption.innerText = img.tags || "(無描述)";
+
+    const checkbox = document.createElement("input");
+    checkbox.type = "checkbox";
+    checkbox.dataset.path = fullPath;
+
+    wrapper.appendChild(imgElement);
+    wrapper.appendChild(caption);
+    wrapper.appendChild(checkbox);
+    imageList.appendChild(wrapper);
+  });
+}
+
+function deleteSelected() {
+  const selected = [...document.querySelectorAll("#image-list input:checked")];
+  if (!selected.length) return;
+  const paths = selected.map(cb => cb.dataset.path.replace(backendURL, ""));
+  fetch(`${backendURL}/delete`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ user_id: userId, paths })
+  })
+  .then(res => res.json())
+  .then(() => loadWardrobe())
+  .catch(err => console.error("刪除錯誤:", err));
+}
