@@ -13,8 +13,8 @@ DATABASE = os.path.join(DB_DIR, "db.sqlite")
 os.makedirs(DB_DIR, exist_ok=True)
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
-# Hugging Face Space API
-BLIP_API_URL = "https://yushon-blip-caption-service.hf.space/run/predict"
+# Hugging Face Space Gradio API
+BLIP_API_URL = "https://yushon-blip-caption-service.hf.space/api/predict/"
 
 def get_caption(image_path):
     try:
@@ -22,9 +22,10 @@ def get_caption(image_path):
             img_bytes = f.read()
         img_b64 = base64.b64encode(img_bytes).decode("utf-8")
 
-        # 用 requests.post 發送 Base64 圖片給 Hugging Face Space
+        # 呼叫 Hugging Face Space 的 Gradio API
         response = requests.post(BLIP_API_URL, json={
-            "data": [f"data:image/png;base64,{img_b64}"]
+            "data": [f"data:image/png;base64,{img_b64}"],
+            "fn_index": 0
         }, timeout=60)
 
         result = response.json()
@@ -77,7 +78,7 @@ def upload():
     filepath = os.path.join(save_dir, filename)
     image.save(filepath)
 
-    # 調用 BLIP 模型生成 caption
+    # 生成 caption
     tags = get_caption(filepath)
 
     rel_path = f"/static/uploads/{user_id}/{category}/{filename}".replace("\\", "/")
