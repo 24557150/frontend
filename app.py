@@ -1,8 +1,7 @@
 from flask import Flask, request, jsonify, g
 from flask_cors import CORS
-import os, sqlite3
+import os, sqlite3, requests, base64
 from werkzeug.utils import secure_filename
-from huggingface_hub import InferenceClient
 
 app = Flask(__name__, static_folder="static", static_url_path="/static")
 CORS(app, supports_credentials=True)
@@ -14,16 +13,18 @@ DATABASE = os.path.join(DB_DIR, "db.sqlite")
 os.makedirs(DB_DIR, exist_ok=True)
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
-# Hugging Face Inference Client
-HF_TOKEN = os.environ.get("HF_TOKEN")  # 在 Render 環境變數中設定
-HF_SPACE = "yushon/blip-caption-service"
-client = InferenceClient(HF_SPACE, token=HF_TOKEN)
+BLIP_API_URL = "https://yushon-blip-caption-service.hf.space/run/predict"
 
 def get_caption(image_path):
     try:
         with open(image_path, "rb") as f:
-            result = client.image_to_text(f.read())
-            return result.get("generated_text", "")
+            img_bytes = f.read()
+        img_b64 = base64.b64encode(img_bytes).decode("utf-8")
+        payload = {"data": [f"data:image/png;base64,{img_b64}"]}
+        res = requests.post(BLIP_API_URL, json=payload, timeout=90)
+        res.raise_for_status()
+        result = res.json()
+        return result.get("data", [""])[0]
     except Exception as e:
         print(f"BLIP API 調用錯誤: {e}")
         return ""
@@ -32,7 +33,8 @@ def get_db():
     if 'db' not in g:
         g.db = sqlite3.connect(DATABASE)
         g.db.row_factory = sqlite3.Row
-        g.db.execute("""CREATE TABLE IF NOT EXISTS wardrobe (
+        g.db.execute("""
+        CREATE TABLE IF NOT EXISTS wardrobe (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             user_id TEXT NOT NULL,
             filename TEXT NOT NULL,
@@ -60,10 +62,13 @@ def upload():
     filename = secure_filename(image.filename)
     filepath = os.path.join(save_dir, filename)
     image.save(filepath)
+
+    # Get caption from Hugging Face Space
     tags = get_caption(filepath)
+
     rel_path = f"/static/uploads/{user_id}/{category}/{filename}".replace("\\", "/")
     db = get_db()
-    db.execute("INSERT INTO wardrobe (user_id, filename, category, tags) VALUES (?, ?, ?, ?)", 
+    db.execute("INSERT INTO wardrobe (user_id, filename, category, tags) VALUES (?, ?, ?, ?)",
                (user_id, filename, category, tags))
     db.commit()
     return jsonify({"status": "ok", "path": rel_path, "category": category, "tags": tags})
@@ -82,7 +87,7 @@ def wardrobe():
         params.append(category)
     rows = db.execute(query, params).fetchall()
     return jsonify({"images": [
-        {"path": f"/static/uploads/{user_id}/{row['category']}/{row['filename']}", 
+        {"path": f"/static/uploads/{user_id}/{row['category']}/{row['filename']}",
          "category": row['category'], "tags": row['tags'] or ''} for row in rows
     ]})
 
@@ -102,7 +107,7 @@ def delete():
             if len(parts) == 3:
                 u_id, category, filename = parts
                 if u_id == user_id:
-                    db.execute("DELETE FROM wardrobe WHERE user_id=? AND category=? AND filename=?", 
+                    db.execute("DELETE FROM wardrobe WHERE user_id=? AND category=? AND filename=?",
                                (user_id, category, filename))
                     file_path = os.path.join(UPLOAD_FOLDER, user_id, category, filename)
                     if os.path.exists(file_path):
