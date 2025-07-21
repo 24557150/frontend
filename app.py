@@ -1,14 +1,11 @@
 from flask import Flask, request, jsonify, g
 from flask_cors import CORS
-import os, sqlite3
+import os, sqlite3, requests, base64
 from werkzeug.utils import secure_filename
-from huggingface_hub import InferenceClient
 
-# === 初始化 Flask ===
 app = Flask(__name__, static_folder="static", static_url_path="/static")
 CORS(app, supports_credentials=True)
 
-# === 資料夾與資料庫 ===
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DB_DIR = os.path.join(BASE_DIR, "database")
 UPLOAD_FOLDER = os.path.join(BASE_DIR, "static", "uploads")
@@ -16,29 +13,22 @@ DATABASE = os.path.join(DB_DIR, "db.sqlite")
 os.makedirs(DB_DIR, exist_ok=True)
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
-# === Hugging Face SDK 設定 ===
-HF_TOKEN = os.environ.get("HF_TOKEN")  # Render 環境變數設定
-HF_SPACE = "yushon/blip-caption-service"  # 你的 Hugging Face Space 名稱
-client = InferenceClient(token=HF_TOKEN)
+BLIP_API_URL = "https://yushon-blip-caption-service.hf.space/run/predict"
 
-# === 取得 BLIP Caption ===
 def get_caption(image_path):
     try:
         with open(image_path, "rb") as f:
-            # 調用 Space 內的模型，將圖片轉為 caption
-            result = client.post(
-                f"https://api-inference.huggingface.co/models/{HF_SPACE}",
-                data=f.read(),
-                headers={"Authorization": f"Bearer {HF_TOKEN}"}
-            )
-        # Hugging Face 回傳的 JSON 結果
-        text = result.get("generated_text") if isinstance(result, dict) else ""
-        return text or ""
+            img_bytes = f.read()
+        img_b64 = base64.b64encode(img_bytes).decode("utf-8")
+        payload = {"data": [f"data:image/png;base64,{img_b64}"]}
+        res = requests.post(BLIP_API_URL, json=payload, timeout=90)
+        res.raise_for_status()
+        result = res.json()
+        return result.get("data", [""])[0]
     except Exception as e:
         print(f"BLIP API 調用錯誤: {e}")
         return ""
 
-# === SQLite 資料庫連線 ===
 def get_db():
     if 'db' not in g:
         g.db = sqlite3.connect(DATABASE)
@@ -60,7 +50,6 @@ def close_db(exception=None):
     if db:
         db.close()
 
-# === API: 上傳圖片 ===
 @app.route('/upload', methods=['POST'])
 def upload():
     image = request.files.get('image')
@@ -68,14 +57,14 @@ def upload():
     user_id = request.form.get('user_id')
     if not image or not category or not user_id:
         return jsonify({"status": "error", "message": "缺少必要參數"}), 400
-
     save_dir = os.path.join(UPLOAD_FOLDER, user_id, category)
     os.makedirs(save_dir, exist_ok=True)
     filename = secure_filename(image.filename)
     filepath = os.path.join(save_dir, filename)
     image.save(filepath)
 
-    tags = get_caption(filepath)  # 呼叫 BLIP API 取得描述
+    # Get caption from Hugging Face Space
+    tags = get_caption(filepath)
 
     rel_path = f"/static/uploads/{user_id}/{category}/{filename}".replace("\\", "/")
     db = get_db()
@@ -84,7 +73,6 @@ def upload():
     db.commit()
     return jsonify({"status": "ok", "path": rel_path, "category": category, "tags": tags})
 
-# === API: 取得衣櫃內容 ===
 @app.route('/wardrobe', methods=['GET'])
 def wardrobe():
     user_id = request.args.get('user_id')
@@ -103,7 +91,6 @@ def wardrobe():
          "category": row['category'], "tags": row['tags'] or ''} for row in rows
     ]})
 
-# === API: 刪除圖片 ===
 @app.route('/delete', methods=['POST'])
 def delete():
     data = request.get_json()
@@ -131,7 +118,7 @@ def delete():
 
 @app.route('/')
 def home():
-    return jsonify({"status": "running", "message": "Flask server is running with Hugging Face SDK"})
+    return jsonify({"status": "running", "message": "Flask 伺服器運行中"})
 
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))
