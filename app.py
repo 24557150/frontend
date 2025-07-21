@@ -15,14 +15,14 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 BLIP_API_URL = "https://yushon-blip-caption-service.hf.space/run/predict"
 
-# 修正版 get_caption（符合 Gradio 預期格式）
+# 使用 tuple 格式，符合 Gradio 的 multipart 上傳需求
 def get_caption(image_path):
     try:
         with open(image_path, "rb") as f:
             response = requests.post(
                 BLIP_API_URL,
-                files={"files": f},              # ⚠ 改成 "files"
-                data={"data": "[]", "fn_index": 0},  # Gradio 預設參數
+                files=[("data", (os.path.basename(image_path), f, "image/png"))],
+                data={"fn_index": 0},
                 timeout=60
             )
         result = response.json()
