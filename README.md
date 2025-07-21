@@ -25,3 +25,6 @@ utils/：
 
 
 pip install -r requirements.venv.txt
+
+安裝
+pip install transformers torch torchvision pillow nltk
