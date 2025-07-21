@@ -1,0 +1,6 @@
+# 忽略虛擬環境與暫存
+venv/
+__pycache__/
+*.pyc
+temp_images/
+backend/static/uploads/
