@@ -13,25 +13,30 @@ DATABASE = os.path.join(DB_DIR, "db.sqlite")
 os.makedirs(DB_DIR, exist_ok=True)
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
-# Hugging Face Space Gradio API
-BLIP_API_URL = "https://yushon-blip-caption-service.hf.space/api/predict/"
+# 使用 Gradio Queue API
+BLIP_API_URL = "https://yushon-blip-caption-service.hf.space/queue/join"
 
 def get_caption(image_path):
     try:
+        # 讀取圖片並轉 Base64
         with open(image_path, "rb") as f:
             img_bytes = f.read()
         img_b64 = base64.b64encode(img_bytes).decode("utf-8")
 
-        # 呼叫 Hugging Face Space 的 Gradio API
-        response = requests.post(BLIP_API_URL, json={
+        # Gradio Queue 格式
+        payload = {
             "data": [f"data:image/png;base64,{img_b64}"],
             "fn_index": 0
-        }, timeout=60)
+        }
+        headers = {"Content-Type": "application/json"}
 
+        response = requests.post(BLIP_API_URL, json=payload, headers=headers, timeout=60)
         result = response.json()
+
         caption = ""
-        if isinstance(result, dict) and "data" in result and isinstance(result["data"], list):
-            caption = result["data"][0]
+        # Gradio Queue 回傳格式：result["output"]["data"][0]
+        if isinstance(result, dict) and "output" in result and "data" in result["output"]:
+            caption = result["output"]["data"][0]
         print(f"[DEBUG] Caption result: {caption}")
         return caption
     except Exception as e:
@@ -78,7 +83,7 @@ def upload():
     filepath = os.path.join(save_dir, filename)
     image.save(filepath)
 
-    # 生成 caption
+    # 呼叫 BLIP 模型生成 caption
     tags = get_caption(filepath)
 
     rel_path = f"/static/uploads/{user_id}/{category}/{filename}".replace("\\", "/")
