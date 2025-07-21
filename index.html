@@ -1,88 +1,42 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8">
   <title>👚 衣櫃上傳</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="stylesheet" href="frontend/style.css">
   <style>
-    .scroll-container {
-      display: flex;
-      overflow-x: auto;
-      gap: 10px;
-      padding: 10px;
-      border: 1px solid #ccc;
-      border-radius: 8px;
-      margin-bottom: 20px;
-    }
-    .scroll-container img {
-      border-radius: 8px;
-      width: 100px;
-      height: auto;
-    }
-    .category-section {
-      margin-bottom: 20px;
-    }
-    button { margin: 5px; padding: 8px 12px; }
+    .image-item { display: inline-block; margin: 10px; text-align: center; }
+    .caption-text { font-size: 14px; margin-top: 4px; color: #555; max-width: 150px; word-wrap: break-word; }
+    #image-list img { width: 150px; border-radius: 8px; }
   </style>
 </head>
 <body>
-  <div style="max-width: 800px; margin: 20px auto; text-align: center;">
+  <div style="max-width:600px;margin:20px auto;text-align:center;">
     <h2>👤 <span id="user-name">尚未登入</span></h2>
-
     <div>
-      <input type="file" id="image-input" accept="image/*" multiple style="display:none;" />
+      <input type="file" id="image-input" accept="image/*" multiple style="display:none;">
       <button type="button" onclick="openImageSourceSelector()">📷 選擇圖片 (本機 / LINE 拍照/相簿)</button>
     </div>
-
-    <!-- 分類選單 -->
-    <select id="category" style="margin-top: 10px;">
+    <select id="category" style="margin-top:10px;">
       <option value="top">上衣</option>
       <option value="bottom">褲子</option>
       <option value="skirt">裙子</option>
       <option value="dress">洋裝</option>
       <option value="shoes">鞋子</option>
     </select>
-    <button id="upload-button" type="button" style="margin-left: 10px;">上傳</button>
-
-    <div id="status" style="margin-top: 10px; font-weight: bold;">🔄 等待登入...</div>
-    <hr>
-
-    <!-- 篩選按鈕 -->
-    <div class="category-buttons" style="margin-bottom: 10px;">
-      <button id="all-button">全部</button>
-      <button id="top-button">上衣</button>
-      <button id="bottom-button">褲子</button>
-      <button id="skirt-button">裙子</button>
-      <button id="dress-button">洋裝</button>
-      <button id="shoes-button">鞋子</button>
-      <button id="delete-button">刪除選取圖片</button>
+    <button id="upload-button">上傳</button>
+    <div id="filters" style="margin-top:15px;">
+      <button onclick="filterCategory('all')">全部</button>
+      <button onclick="filterCategory('top')">上衣</button>
+      <button onclick="filterCategory('bottom')">褲子</button>
+      <button onclick="filterCategory('skirt')">裙子</button>
+      <button onclick="filterCategory('dress')">洋裝</button>
+      <button onclick="filterCategory('shoes')">鞋子</button>
     </div>
-
-    <!-- 圖片展示區 -->
-    <div id="image-list">
-      <div class="category-section" id="top-section">
-        <h3>上衣</h3>
-        <div class="scroll-container" id="top-container"></div>
-      </div>
-      <div class="category-section" id="bottom-section">
-        <h3>褲子</h3>
-        <div class="scroll-container" id="bottom-container"></div>
-      </div>
-      <div class="category-section" id="skirt-section">
-        <h3>裙子</h3>
-        <div class="scroll-container" id="skirt-container"></div>
-      </div>
-      <div class="category-section" id="dress-section">
-        <h3>洋裝</h3>
-        <div class="scroll-container" id="dress-container"></div>
-      </div>
-      <div class="category-section" id="shoes-section">
-        <h3>鞋子</h3>
-        <div class="scroll-container" id="shoes-container"></div>
-      </div>
-    </div>
+    <div id="image-list" style="margin-top:20px;"></div>
   </div>
+<<<<<<< HEAD
 
   <!-- LIFF SDK -->
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
@@ -94,5 +48,8 @@
       document.getElementById('image-input').click();
     }
   </script>
+=======
+  <script src="upload.js"></script>
+>>>>>>> 8a9e2144f5368b1b08112c3722033cd6819c04f2
 </body>
 </html>

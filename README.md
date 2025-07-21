@@ -22,3 +22,9 @@ utils/：
     分割模型（如 rembg）
 
     處理圖片儲存、分類查詢
+
+
+pip install -r requirements.venv.txt
+
+安裝
+pip install transformers torch torchvision pillow nltk

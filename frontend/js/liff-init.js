@@ -1,5 +1,5 @@
 // frontend/js/liff-init.js
-export const backendURL = 'https://a7946680e883.ngrok-free.app';
+export const backendURL = 'https://liff-test-9xse.onrender.com';
 
 import { loadWardrobe } from './upload.js';
 
@@ -10,7 +10,7 @@ async function initializeLiff() {
     await liff.init({ liffId });
 
     if (!liff.isLoggedIn()) {
-      // 修正 iOS：登入後回到目前頁面
+      // iOS 登入修正：登入後回到目前頁面
       liff.login({ redirectUri: window.location.href });
       return;
     }
@@ -18,7 +18,7 @@ async function initializeLiff() {
     const profile = await liff.getProfile();
     const userId = profile.userId;
 
-    // 儲存真正的 LINE userId（不再使用 demo_user）
+    // 儲存 LINE userId
     localStorage.setItem('user_id', userId);
 
     document.getElementById('user-name').innerText = profile.displayName;

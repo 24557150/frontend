@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 export const backendURL = 'https://liff-test-9xse.onrender.com';
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -66,10 +67,35 @@ function displayImages(images) {
     wrapper.appendChild(imgElement);
     wrapper.appendChild(caption);
     wrapper.appendChild(checkbox);
+=======
+const backendURL = "https://liff-test-9xse.onrender.com";
+
+async function fetchWardrobe(category="all") {
+  const userId = localStorage.getItem("userId") || "guest";
+  const res = await fetch(`${backendURL}/wardrobe?user_id=${userId}&category=${category}`);
+  const data = await res.json();
+  displayImages(data.images);
+}
+
+function displayImages(images) {
+  const container = document.getElementById("image-list");
+  container.innerHTML = "";
+  images.forEach(img => {
+    const wrapper = document.createElement("div");
+    wrapper.className = "image-item";
+    const image = document.createElement("img");
+    image.src = backendURL + img.path;
+    const caption = document.createElement("div");
+    caption.className = "caption-text";
+    caption.textContent = img.tags || "";
+    wrapper.appendChild(image);
+    wrapper.appendChild(caption);
+>>>>>>> 8a9e2144f5368b1b08112c3722033cd6819c04f2
     container.appendChild(wrapper);
   });
 }
 
+<<<<<<< HEAD
 function filterCategory(category) {
   document.querySelectorAll('.category-section').forEach(sec => {
     sec.style.display = (category === 'all' || sec.id.startsWith(category)) ? 'block' : 'none';
@@ -89,3 +115,8 @@ async function deleteSelected() {
     console.error("❌ 刪除錯誤:", err);
   }
 }
+=======
+document.addEventListener("DOMContentLoaded", () => {
+  fetchWardrobe("all");
+});
+>>>>>>> 8a9e2144f5368b1b08112c3722033cd6819c04f2
