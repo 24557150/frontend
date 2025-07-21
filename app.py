@@ -1,6 +1,6 @@
 from flask import Flask, request, jsonify, g
 from flask_cors import CORS
-import os, sqlite3, requests, base64
+import os, sqlite3, base64, requests
 from werkzeug.utils import secure_filename
 
 app = Flask(__name__, static_folder="static", static_url_path="/static")
@@ -13,6 +13,7 @@ DATABASE = os.path.join(DB_DIR, "db.sqlite")
 os.makedirs(DB_DIR, exist_ok=True)
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
+# Hugging Face Space API
 BLIP_API_URL = "https://yushon-blip-caption-service.hf.space/run/predict"
 
 def get_caption(image_path):
@@ -20,13 +21,20 @@ def get_caption(image_path):
         with open(image_path, "rb") as f:
             img_bytes = f.read()
         img_b64 = base64.b64encode(img_bytes).decode("utf-8")
-        payload = {"data": [f"data:image/png;base64,{img_b64}"]}
-        res = requests.post(BLIP_API_URL, json=payload, timeout=90)
-        res.raise_for_status()
-        result = res.json()
-        return result.get("data", [""])[0]
+
+        # 用 requests.post 發送 Base64 圖片給 Hugging Face Space
+        response = requests.post(BLIP_API_URL, json={
+            "data": [f"data:image/png;base64,{img_b64}"]
+        }, timeout=60)
+
+        result = response.json()
+        caption = ""
+        if isinstance(result, dict) and "data" in result and isinstance(result["data"], list):
+            caption = result["data"][0]
+        print(f"[DEBUG] Caption result: {caption}")
+        return caption
     except Exception as e:
-        print(f"BLIP API 調用錯誤: {e}")
+        print(f"[ERROR] BLIP API 調用錯誤: {e}")
         return ""
 
 def get_db():
@@ -41,6 +49,10 @@ def get_db():
             category TEXT NOT NULL,
             tags TEXT
         )""")
+        try:
+            g.db.execute("ALTER TABLE wardrobe ADD COLUMN tags TEXT")
+        except sqlite3.OperationalError:
+            pass
         g.db.commit()
     return g.db
 
@@ -57,20 +69,25 @@ def upload():
     user_id = request.form.get('user_id')
     if not image or not category or not user_id:
         return jsonify({"status": "error", "message": "缺少必要參數"}), 400
+
     save_dir = os.path.join(UPLOAD_FOLDER, user_id, category)
     os.makedirs(save_dir, exist_ok=True)
+
     filename = secure_filename(image.filename)
     filepath = os.path.join(save_dir, filename)
     image.save(filepath)
 
-    # Get caption from Hugging Face Space
+    # 調用 BLIP 模型生成 caption
     tags = get_caption(filepath)
 
     rel_path = f"/static/uploads/{user_id}/{category}/{filename}".replace("\\", "/")
     db = get_db()
-    db.execute("INSERT INTO wardrobe (user_id, filename, category, tags) VALUES (?, ?, ?, ?)",
-               (user_id, filename, category, tags))
+    db.execute(
+        "INSERT INTO wardrobe (user_id, filename, category, tags) VALUES (?, ?, ?, ?)",
+        (user_id, filename, category, tags)
+    )
     db.commit()
+
     return jsonify({"status": "ok", "path": rel_path, "category": category, "tags": tags})
 
 @app.route('/wardrobe', methods=['GET'])
@@ -79,6 +96,7 @@ def wardrobe():
     category = request.args.get('category')
     if not user_id:
         return jsonify({"status": "error", "message": "缺少 user_id"}), 400
+
     db = get_db()
     query = "SELECT filename, category, tags FROM wardrobe WHERE user_id = ?"
     params = [user_id]
@@ -86,10 +104,16 @@ def wardrobe():
         query += " AND category = ?"
         params.append(category)
     rows = db.execute(query, params).fetchall()
-    return jsonify({"images": [
-        {"path": f"/static/uploads/{user_id}/{row['category']}/{row['filename']}",
-         "category": row['category'], "tags": row['tags'] or ''} for row in rows
-    ]})
+
+    return jsonify({
+        "images": [
+            {
+                "path": f"/static/uploads/{user_id}/{row['category']}/{row['filename']}",
+                "category": row['category'],
+                "tags": row['tags'] or ''
+            } for row in rows
+        ]
+    })
 
 @app.route('/delete', methods=['POST'])
 def delete():
@@ -98,6 +122,7 @@ def delete():
     paths = data.get('paths', [])
     if not user_id or not paths:
         return jsonify({"status": "error", "message": "缺少 user_id 或 paths"}), 400
+
     db = get_db()
     deleted = 0
     for rel_path in paths:
@@ -107,8 +132,10 @@ def delete():
             if len(parts) == 3:
                 u_id, category, filename = parts
                 if u_id == user_id:
-                    db.execute("DELETE FROM wardrobe WHERE user_id=? AND category=? AND filename=?",
-                               (user_id, category, filename))
+                    db.execute(
+                        "DELETE FROM wardrobe WHERE user_id=? AND category=? AND filename=?",
+                        (user_id, category, filename)
+                    )
                     file_path = os.path.join(UPLOAD_FOLDER, user_id, category, filename)
                     if os.path.exists(file_path):
                         os.remove(file_path)
