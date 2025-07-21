@@ -1,4 +1,4 @@
-export const backendURL = 'https://a7946680e883.ngrok-free.app'; // 這裡必須換成你目前 ngrok 的網址
+export const backendURL = 'https://15d8e02b0411.ngrok-free.app'; // 這裡必須換成你目前 ngrok 的網址
 
 document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('upload-button').addEventListener('click', uploadImages);
