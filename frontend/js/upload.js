@@ -68,7 +68,7 @@ function displayImages(images) {
   });
 
   images.forEach(img => {
-    const fullPath = `${backendURL}${img.path}`;
+    const fullPath = img.path;
     const container = document.getElementById(`${img.category}-container`);
     if (!container) return;
 

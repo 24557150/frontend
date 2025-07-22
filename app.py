@@ -13,7 +13,7 @@ DATABASE = os.path.join(DB_DIR, "db.sqlite")
 os.makedirs(DB_DIR, exist_ok=True)
 
 # Google Cloud Storage
-BUCKET_NAME = os.getenv("GCS_BUCKET_NAME")
+BUCKET_NAME = os.getenv("GCS_BUCKET_NAME") or "mwardrobe"
 client = storage.Client.from_service_account_json(os.getenv("GOOGLE_APPLICATION_CREDENTIALS"))
 bucket = client.bucket(BUCKET_NAME)
 
