@@ -1,6 +1,7 @@
+# app.py
 from flask import Flask, request, jsonify, g
 from flask_cors import CORS
-import os, sqlite3, base64, requests, tempfile
+import os, sqlite3, tempfile
 from werkzeug.utils import secure_filename
 from google.cloud import storage
 from huggingface_hub import InferenceClient
@@ -63,7 +64,6 @@ def close_db(exception=None):
     if db:
         db.close()
 
-# === 上傳 API ===
 @app.route('/upload', methods=['POST'])
 def upload():
     image = request.files.get('image')
@@ -76,14 +76,11 @@ def upload():
     tmp_path = os.path.join(tempfile.gettempdir(), filename)
     image.save(tmp_path)
 
-    # 生成 Caption
     tags = get_caption(tmp_path)
 
-    # 上傳至 GCS
     gcs_path = f"{user_id}/{category}/{filename}"
     public_url = upload_to_gcs(tmp_path, gcs_path)
 
-    # 存入資料庫
     db = get_db()
     db.execute(
         "INSERT INTO wardrobe (user_id, gcs_url, category, tags) VALUES (?, ?, ?, ?)",
@@ -93,7 +90,6 @@ def upload():
 
     return jsonify({"status": "ok", "url": public_url, "category": category, "tags": tags})
 
-# === 取得衣櫃 ===
 @app.route('/wardrobe', methods=['GET'])
 def wardrobe():
     user_id = request.args.get('user_id')
@@ -114,7 +110,6 @@ def wardrobe():
         for row in rows
     ]})
 
-# === 刪除 API ===
 @app.route('/delete', methods=['POST'])
 def delete():
     data = request.get_json()
