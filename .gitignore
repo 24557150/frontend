@@ -1,7 +1,13 @@
-Flask==3.0.3
-Flask-Cors==4.0.0
-Werkzeug==3.0.2
-gunicorn
-requests
-huggingface_hub>=0.23.0
-google-cloud-storage>=2.16.0
+# 忽略 Python 暫存檔案
+__pycache__/
+*.pyc
+
+# 忽略虛擬環境
+venv/
+
+# 忽略環境變數與憑證
+.env
+storage-admin-key.json
+
+# 忽略其他不必要檔案
+*.log
