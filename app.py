@@ -1,95 +1,93 @@
-import os, sqlite3, base64, requests, tempfile
+import os
+import sqlite3
+import tempfile
 from flask import Flask, request, jsonify, g
 from flask_cors import CORS
 from werkzeug.utils import secure_filename
 from google.cloud import storage
+import requests
 
-app = Flask(__name__, static_folder="static", static_url_path="/static")
-CORS(app, supports_credentials=True)
+app = Flask(__name__)
+CORS(app)
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DB_DIR = os.path.join(BASE_DIR, "database")
-DATABASE = os.path.join(DB_DIR, "db.sqlite")
-os.makedirs(DB_DIR, exist_ok=True)
+# GCS 設定
+GCS_BUCKET_NAME = os.getenv("GCS_BUCKET_NAME") or "mwardrobe"
+GCS_KEY_PATH = os.getenv("GOOGLE_APPLICATION_CREDENTIALS")
+client = storage.Client.from_service_account_json(GCS_KEY_PATH)
+bucket = client.bucket(GCS_BUCKET_NAME)
 
-# Google Cloud Storage
-BUCKET_NAME = os.getenv("GCS_BUCKET_NAME") or "mwardrobe"
-client = storage.Client.from_service_account_json(os.getenv("GOOGLE_APPLICATION_CREDENTIALS"))
-bucket = client.bucket(BUCKET_NAME)
-
-# Hugging Face Space API
-BLIP_API_URL = "https://yushon-blip-caption-service.hf.space/run/predict"
-
-def get_caption(image_path):
-    try:
-        with open(image_path, "rb") as f:
-            img_bytes = f.read()
-        img_b64 = base64.b64encode(img_bytes).decode("utf-8")
-        response = requests.post(BLIP_API_URL, json={
-            "data": [f"data:image/png;base64,{img_b64}"]
-        }, timeout=60)
-        result = response.json()
-        caption = ""
-        if isinstance(result, dict) and "data" in result and isinstance(result["data"], list):
-            caption = result["data"][0]
-        return caption
-    except Exception as e:
-        print(f"[ERROR] BLIP API 調用錯誤: {e}")
-        return ""
-
-def upload_to_gcs(local_path, dest_blob_name):
-    blob = bucket.blob(dest_blob_name)
-    blob.upload_from_filename(local_path)
-    blob.make_public()
-    return f"https://storage.googleapis.com/{BUCKET_NAME}/{dest_blob_name}"
+DATABASE = os.path.join(os.path.dirname(__file__), "database", "db.sqlite")
+os.makedirs(os.path.dirname(DATABASE), exist_ok=True)
 
 def get_db():
     if 'db' not in g:
         g.db = sqlite3.connect(DATABASE)
         g.db.row_factory = sqlite3.Row
-        g.db.execute("""
-        CREATE TABLE IF NOT EXISTS wardrobe (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_id TEXT NOT NULL,
-            filename TEXT NOT NULL,
-            category TEXT NOT NULL,
-            tags TEXT
-        )""")
-        try:
-            g.db.execute("ALTER TABLE wardrobe ADD COLUMN tags TEXT")
-        except sqlite3.OperationalError:
-            pass
-        g.db.commit()
     return g.db
 
 @app.teardown_appcontext
 def close_db(exception=None):
     db = g.pop('db', None)
-    if db:
+    if db is not None:
         db.close()
 
-@app.route('/upload', methods=['POST'])
+def upload_to_gcs(local_path, destination_blob_name):
+    blob = bucket.blob(destination_blob_name)
+    blob.upload_from_filename(local_path)
+    blob.make_public()
+    return blob.public_url
+
+def get_caption(local_path):
+    # 請填寫你的 Hugging Face Space API URL
+    BLIP_API_URL = "https://你的space名稱.hf.space/caption"
+    try:
+        with open(local_path, "rb") as f:
+            files = {"image": f}
+            response = requests.post(BLIP_API_URL, files=files, timeout=60)
+        if response.status_code == 200:
+            tags = response.json().get("caption", "(未取得描述)")
+        else:
+            tags = f"(描述失敗 {response.status_code})"
+        return tags
+    except Exception as e:
+        print(f"[ERR] BLIP API 呼叫失敗: {e}")
+        return "(描述錯誤)"
+
+@app.route("/upload", methods=["POST"])
 def upload():
-    image = request.files.get('image')
-    category = request.form.get('category')
-    user_id = request.form.get('user_id')
+    image = request.files.get("image")
+    category = request.form.get("category")
+    user_id = request.form.get("user_id")
+
     if not image or not category or not user_id:
+        print("[ERR] 缺少必要參數")
         return jsonify({"status": "error", "message": "缺少必要參數"}), 400
 
-    # 存到暫存檔
     filename = secure_filename(image.filename)
+    # 存成暫存檔
     with tempfile.NamedTemporaryFile(delete=False) as tmp:
         image.save(tmp.name)
         tmp_path = tmp.name
+    print(f"[DEBUG] 暫存圖片路徑: {tmp_path}")
 
-    # 跑 BLIP 模型
+    # 取得描述
     tags = get_caption(tmp_path)
+    print(f"[DEBUG] 取得形容詞描述: {tags}")
 
-    # 上傳 GCS (user_id/category/filename)
+    # 上傳到 GCS
     gcs_path = f"{user_id}/{category}/{filename}"
-    public_url = upload_to_gcs(tmp_path, gcs_path)
+    print(f"[DEBUG] 上傳 GCS 路徑: {gcs_path}")
+    try:
+        public_url = upload_to_gcs(tmp_path, gcs_path)
+        print(f"[DEBUG] 上傳成功，public_url: {public_url}")
+    except Exception as e:
+        print(f"[ERR] GCS 上傳失敗: {e}")
+        os.remove(tmp_path)
+        return jsonify({"status": "error", "message": "GCS 上傳失敗"}), 500
+
     os.remove(tmp_path)
 
+    # 寫入 SQLite
     db = get_db()
     db.execute(
         "INSERT INTO wardrobe (user_id, filename, category, tags) VALUES (?, ?, ?, ?)",
@@ -97,61 +95,58 @@ def upload():
     )
     db.commit()
 
-    return jsonify({"status": "ok", "path": public_url, "category": category, "tags": tags})
-
-@app.route('/wardrobe', methods=['GET'])
-def wardrobe():
-    user_id = request.args.get('user_id')
-    category = request.args.get('category')
-    if not user_id:
-        return jsonify({"status": "error", "message": "缺少 user_id"}), 400
-
-    db = get_db()
-    query = "SELECT filename, category, tags FROM wardrobe WHERE user_id = ?"
-    params = [user_id]
-    if category and category != "all":
-        query += " AND category = ?"
-        params.append(category)
-    rows = db.execute(query, params).fetchall()
-
     return jsonify({
-        "images": [
-            {
-                "path": row['filename'],  # 這裡直接存GCS URL
-                "category": row['category'],
-                "tags": row['tags'] or ''
-            } for row in rows
-        ]
+        "status": "ok",
+        "path": public_url,
+        "category": category,
+        "tags": tags
     })
 
-@app.route('/delete', methods=['POST'])
+@app.route("/wardrobe", methods=["GET"])
+def wardrobe():
+    user_id = request.args.get("user_id")
+    if not user_id:
+        return jsonify({"images": []})
+    db = get_db()
+    rows = db.execute(
+        "SELECT id, filename, category, tags FROM wardrobe WHERE user_id = ?",
+        (user_id,)
+    ).fetchall()
+    images = [
+        {
+            "id": row["id"],
+            "path": row["filename"],  # filename 其實就是 public_url
+            "category": row["category"],
+            "tags": row["tags"],
+        }
+        for row in rows
+    ]
+    return jsonify({"images": images})
+
+@app.route("/delete", methods=["POST"])
 def delete():
     data = request.get_json()
-    user_id = data.get('user_id')
-    paths = data.get('paths', [])
-    if not user_id or not paths:
-        return jsonify({"status": "error", "message": "缺少 user_id 或 paths"}), 400
-
+    user_id = data.get("user_id")
+    paths = data.get("urls", [])
     db = get_db()
-    deleted = 0
-    for gcs_url in paths:
-        # gcs_url 格式 https://storage.googleapis.com/BUCKET_NAME/user_id/category/filename
+    for path in paths:
+        # 刪除 GCS 上的物件
         try:
-            # 刪 GCS
-            rel_path = gcs_url.split(f"https://storage.googleapis.com/{BUCKET_NAME}/")[-1]
-            blob = bucket.blob(rel_path)
-            blob.delete()
+            # 解析 GCS blob 路徑（從 public_url 取出 blob 名稱）
+            idx = path.find(f"/{GCS_BUCKET_NAME}/")
+            if idx != -1:
+                blob_name = path[idx + len(GCS_BUCKET_NAME) + 2 :]
+                blob = bucket.blob(blob_name)
+                blob.delete()
+                print(f"[DEBUG] 刪除 GCS: {blob_name}")
         except Exception as e:
-            print("[WARN] 刪除GCS失敗", e)
-        db.execute("DELETE FROM wardrobe WHERE user_id=? AND filename=?", (user_id, gcs_url))
-        deleted += 1
+            print(f"[ERR] 刪除 GCS 失敗: {e}")
+        db.execute(
+            "DELETE FROM wardrobe WHERE user_id = ? AND filename = ?",
+            (user_id, path),
+        )
     db.commit()
-    return jsonify({"status": "ok", "deleted": deleted})
+    return jsonify({"status": "ok"})
 
-@app.route('/')
-def home():
-    return jsonify({"status": "running", "message": "Flask 伺服器運行中（GCS儲存）"})
-
-if __name__ == '__main__':
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port)
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=5000)
