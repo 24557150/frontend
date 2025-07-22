@@ -1,6 +1,7 @@
-# 忽略虛擬環境與暫存
-venv/
-__pycache__/
-*.pyc
-temp_images/
-backend/static/uploads/
+Flask==3.0.3
+Flask-Cors==4.0.0
+Werkzeug==3.0.2
+gunicorn
+requests
+huggingface_hub>=0.23.0
+google-cloud-storage>=2.16.0
