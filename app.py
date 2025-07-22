@@ -8,7 +8,7 @@ from google.cloud import storage
 import requests
 
 app = Flask(__name__)
-CORS(app)
+CORS(app, supports_credentials=True, origins="*")
 
 # GCS 設定
 GCS_BUCKET_NAME = os.getenv("GCS_BUCKET_NAME") or "mwardrobe"
