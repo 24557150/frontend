@@ -3,6 +3,7 @@ from flask_cors import CORS
 import os, sqlite3, base64, requests, tempfile
 from werkzeug.utils import secure_filename
 from google.cloud import storage
+from huggingface_hub import InferenceClient
 
 app = Flask(__name__)
 CORS(app, supports_credentials=True)
@@ -10,8 +11,12 @@ CORS(app, supports_credentials=True)
 # === GCS 設定 ===
 bucket_name = os.getenv("GCS_BUCKET_NAME")
 gcp_credentials = os.getenv("GOOGLE_APPLICATION_CREDENTIALS")
-client = storage.Client.from_service_account_json(gcp_credentials)
-bucket = client.bucket(bucket_name)
+client_gcs = storage.Client.from_service_account_json(gcp_credentials)
+bucket = client_gcs.bucket(bucket_name)
+
+# === Hugging Face BLIP 模型 ===
+HF_TOKEN = os.environ.get("HF_TOKEN")
+hf_client = InferenceClient(token=HF_TOKEN)
 
 def upload_to_gcs(local_file, destination_path):
     blob = bucket.blob(destination_path)
@@ -19,22 +24,16 @@ def upload_to_gcs(local_file, destination_path):
     blob.make_public()
     return blob.public_url
 
-# === Hugging Face BLIP Space API ===
-BLIP_API_URL = "https://yushon-blip-caption-service.hf.space/run/predict"
-
 def get_caption(image_path):
     try:
         with open(image_path, "rb") as f:
-            img_b64 = base64.b64encode(f.read()).decode("utf-8")
-        res = requests.post(BLIP_API_URL, json={
-            "data": [f"data:image/png;base64,{img_b64}"]
-        }, timeout=60)
-        result = res.json()
-        if isinstance(result, dict) and "data" in result:
-            return result["data"][0]
-        return ""
+            result = hf_client.image_to_text(
+                model="Salesforce/blip-image-captioning-base",
+                image=f
+            )
+            return result.get("generated_text", "")
     except Exception as e:
-        print(f"[ERROR] BLIP API 調用錯誤: {e}")
+        print(f"BLIP API 調用錯誤: {e}")
         return ""
 
 # === SQLite 設定 ===
@@ -77,14 +76,14 @@ def upload():
     tmp_path = os.path.join(tempfile.gettempdir(), filename)
     image.save(tmp_path)
 
-    # 生成 caption
+    # 生成 Caption
     tags = get_caption(tmp_path)
 
     # 上傳至 GCS
     gcs_path = f"{user_id}/{category}/{filename}"
     public_url = upload_to_gcs(tmp_path, gcs_path)
 
-    # 存資料庫
+    # 存入資料庫
     db = get_db()
     db.execute(
         "INSERT INTO wardrobe (user_id, gcs_url, category, tags) VALUES (?, ?, ?, ?)",
@@ -94,7 +93,7 @@ def upload():
 
     return jsonify({"status": "ok", "url": public_url, "category": category, "tags": tags})
 
-# === 讀取衣櫃 ===
+# === 取得衣櫃 ===
 @app.route('/wardrobe', methods=['GET'])
 def wardrobe():
     user_id = request.args.get('user_id')
@@ -127,12 +126,9 @@ def delete():
     db = get_db()
     deleted = 0
     for url in urls:
-        # 找出 GCS 路徑
         if f"https://storage.googleapis.com/{bucket_name}/" in url:
             gcs_path = url.split(f"{bucket_name}/", 1)[-1]
-            # 從資料庫刪除
             db.execute("DELETE FROM wardrobe WHERE user_id=? AND gcs_url=?", (user_id, url))
-            # 從 GCS 刪除
             blob = bucket.blob(gcs_path)
             blob.delete()
             deleted += 1
@@ -141,7 +137,7 @@ def delete():
 
 @app.route('/')
 def home():
-    return jsonify({"status": "running", "message": "Flask with GCS storage"})
+    return jsonify({"status": "running", "message": "Flask with GCS storage & BLIP caption"})
 
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))

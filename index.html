@@ -5,31 +5,15 @@
   <title>👚 我的衣櫃</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
-    .image-item {
-      display: inline-block;
-      margin: 10px;
-      text-align: center;
-    }
-    .image-item img {
-      width: 150px;
-      height: 150px;
-      object-fit: cover;
-      border-radius: 8px;
-    }
-    .caption-text {
-      font-size: 14px;
-      color: #555;
-      margin-top: 4px;
-      max-width: 150px;
-      word-wrap: break-word;
-    }
+    .image-item { display: inline-block; margin: 10px; text-align: center; }
+    .image-item img { width: 150px; height: 150px; object-fit: cover; border-radius: 8px; }
+    .caption-text { font-size: 14px; color: #555; margin-top: 4px; max-width: 150px; word-wrap: break-word; }
   </style>
 </head>
 <body>
   <div style="max-width: 600px; margin: 20px auto; text-align: center;">
     <h2>👤 <span id="user-name">尚未登入</span></h2>
 
-    <!-- 上傳圖片 -->
     <input type="file" id="image-input" accept="image/*" multiple style="display:none;">
     <button type="button" onclick="document.getElementById('image-input').click()">📷 選擇圖片</button>
     <select id="category" style="margin-top: 10px;">
@@ -41,10 +25,7 @@
     </select>
     <button id="upload-button">上傳</button>
 
-    <!-- 圖片清單 -->
     <div id="image-list" style="margin-top: 20px;"></div>
-
-    <!-- 刪除 -->
     <button id="delete-button" style="margin-top: 20px;">刪除選擇的圖片</button>
   </div>
 

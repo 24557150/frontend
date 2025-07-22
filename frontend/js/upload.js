@@ -46,7 +46,7 @@ function displayImages(images) {
     wrapper.className = "image-item";
 
     const image = document.createElement("img");
-    image.src = img.url;  // GCS public URL
+    image.src = img.url;
 
     const caption = document.createElement("div");
     caption.className = "caption-text";
@@ -77,4 +77,3 @@ async function deleteSelected() {
 
   loadWardrobe(userId);
 }
-
