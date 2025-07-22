@@ -4,134 +4,53 @@
   <meta charset="UTF-8" />
   <title>👚 衣櫃上傳</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <link rel="stylesheet" href="frontend/style.css">
   <style>
-    body {
-      background: #f8f9fb;
-      font-family: "微軟正黑體", Arial;
-      margin: 0;
-      min-height: 100vh;
-    }
-    .center-wrap {
-      max-width: 800px;
-      margin: 30px auto 0 auto;
-      padding: 20px;
-      background: #fff;
-      border-radius: 12px;
-      box-shadow: 0 2px 10px #0001;
-      text-align: center;
-    }
-    #user-name {
-      font-size: 1.3em;
-      margin-left: 8px;
-      vertical-align: middle;
-    }
-    .category-btn, .filter-btn, #upload-button, #delete-button {
-      margin: 5px 2px;
-      padding: 6px 18px;
-      border-radius: 6px;
-      border: 1px solid #888;
-      background: #f2f2f2;
-      cursor: pointer;
-      transition: background .2s;
-    }
-    .category-btn:hover, .filter-btn:hover, #upload-button:hover, #delete-button:hover {
-      background: #e0e0e0;
-    }
-    #image-list {
-      margin-top: 28px;
-      width: 100%;
-      text-align: left;
-    }
-    .category-section {
-      margin-bottom: 35px;
-      background: #fafbfc;
-      border-radius: 10px;
-      padding: 18px 10px 10px 10px;
-      border: 1px solid #eee;
-      min-height: 90px;
-    }
-    .category-section h3 {
-      text-align: left;
-      margin-left: 16px;
-      font-weight: bold;
-    }
-    .image-row {
-      display: flex;
-      flex-direction: row;
-      gap: 20px;
-      overflow-x: auto;
-      padding: 8px 0;
-      min-height: 170px;
-    }
-    .image-item {
-      flex: 0 0 auto;
-      width: 150px;
-      text-align: center;
-      margin-bottom: 10px;
-    }
-    .image-item img {
-      width: 140px;
-      height: 140px;
-      object-fit: cover;
-      border-radius: 8px;
-      background: #eee;
-      border: 1px solid #ddd;
-    }
-    .caption-text {
-      font-size: 13px;
-      color: #555;
-      margin: 6px 0 2px 0;
-      min-height: 20px;
-      max-width: 130px;
-      word-break: break-all;
-      text-align: center;
-      overflow: hidden;
-    }
+    .scroll-container { display: flex; overflow-x: auto; gap: 10px; padding: 10px; border: 1px solid #ccc; border-radius: 8px; margin-bottom: 20px; }
+    .scroll-container img { border-radius: 8px; width: 100px; height: auto; }
+    .caption-text { font-size: 13px; margin-top: 6px; color: #444; text-align: center; max-width: 150px; word-break: break-word; }
+    .image-item { display: flex; flex-direction: column; align-items: center; }
+    .category-section { margin-bottom: 20px; }
+    button { margin: 5px; padding: 8px 12px; }
   </style>
 </head>
 <body>
-  <div class="center-wrap">
-    <div style="margin-bottom: 8px;">
-      <span style="font-size:1.2em;">👤</span>
-      <span id="user-name">尚未登入</span>
-    </div>
-    <div style="margin-bottom:10px;">
-      <input type="file" id="image-input" accept="image/*" multiple style="display:none;" />
-      <button id="open-file" class="category-btn">📷 選擇圖片 (本機 / LINE 拍照/相簿)</button>
-      <select id="category" class="category-btn" style="margin:0 2px;">
-        <option value="top">上衣</option>
-        <option value="bottom">褲子</option>
-        <option value="skirt">裙子</option>
-        <option value="dress">洋裝</option>
-        <option value="shoes">鞋子</option>
-      </select>
-      <button id="upload-button" class="category-btn">上傳</button>
-    </div>
-    <div style="margin-bottom:8px;">
-      <input type="checkbox" id="login-check" checked disabled style="vertical-align:middle;">
-      <span style="font-size:1em;">已登入：</span>
-      <input type="text" id="user-id" style="width:140px;" disabled>
-    </div>
-    <hr style="margin:18px 0 14px 0;">
+  <div style="max-width: 800px; margin: 20px auto; text-align: center;">
+    <h2>👤 <span id="user-name">尚未登入</span></h2>
     <div>
-      <button class="filter-btn" onclick="filterCategory('all')">全部</button>
-      <button class="filter-btn" onclick="filterCategory('top')">上衣</button>
-      <button class="filter-btn" onclick="filterCategory('bottom')">褲子</button>
-      <button class="filter-btn" onclick="filterCategory('skirt')">裙子</button>
-      <button class="filter-btn" onclick="filterCategory('dress')">洋裝</button>
-      <button class="filter-btn" onclick="filterCategory('shoes')">鞋子</button>
-      <button id="delete-button" class="filter-btn" style="margin-left:10px;">刪除選擇的圖片</button>
+      <input type="file" id="image-input" accept="image/*" multiple style="display:none;" />
+      <button type="button" onclick="openImageSourceSelector()">📷 選擇圖片 (本機 / LINE 拍照/相簿)</button>
     </div>
-    <div id="image-list"></div>
+    <select id="category" style="margin-top: 10px;">
+      <option value="top">上衣</option>
+      <option value="bottom">褲子</option>
+      <option value="skirt">裙子</option>
+      <option value="dress">洋裝</option>
+      <option value="shoes">鞋子</option>
+    </select>
+    <button id="upload-button" type="button" style="margin-left: 10px;">上傳</button>
+    <div id="status" style="margin-top: 10px; font-weight: bold;">🔄 等待登入...</div>
+    <hr>
+    <div class="category-buttons" style="margin-bottom: 10px;">
+      <button id="all-button">全部</button>
+      <button id="top-button">上衣</button>
+      <button id="bottom-button">褲子</button>
+      <button id="skirt-button">裙子</button>
+      <button id="dress-button">洋裝</button>
+      <button id="shoes-button">鞋子</button>
+      <button id="delete-button">刪除選取圖片</button>
+    </div>
+    <div id="image-list">
+      <div class="category-section" id="top-section"><h3>上衣</h3><div class="scroll-container" id="top-container"></div></div>
+      <div class="category-section" id="bottom-section"><h3>褲子</h3><div class="scroll-container" id="bottom-container"></div></div>
+      <div class="category-section" id="skirt-section"><h3>裙子</h3><div class="scroll-container" id="skirt-container"></div></div>
+      <div class="category-section" id="dress-section"><h3>洋裝</h3><div class="scroll-container" id="dress-container"></div></div>
+      <div class="category-section" id="shoes-section"><h3>鞋子</h3><div class="scroll-container" id="shoes-container"></div></div>
+    </div>
   </div>
-  <script src="upload.js"></script>
-  <script>
-    // 點按按鈕彈出input選圖
-    document.getElementById('open-file').onclick = () => {
-      document.getElementById('image-input').click();
-    }
-  </script>
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <script type="module" src="frontend/js/liff-init.js"></script>
+  <script type="module" src="frontend/js/upload.js"></script>
+  <script>function openImageSourceSelector(){document.getElementById('image-input').click();}</script>
 </body>
 </html>
