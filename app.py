@@ -39,7 +39,7 @@ def upload_to_gcs(local_path, destination_blob_name):
 
 def get_caption(local_path):
     # 請填寫你的 Hugging Face Space API URL
-    BLIP_API_URL = "https://你的space名稱.hf.space/caption"
+    BLIP_API_URL = "https://yushon-blip-caption-service.hf.space/caption"
     try:
         with open(local_path, "rb") as f:
             files = {"image": f}

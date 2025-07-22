@@ -38,7 +38,7 @@ async function uploadImages() {
         credentials: 'include'
       });
     } catch (err) {
-      alert("⚠️ 後端連線失敗，請檢查 ngrok 是否啟動");
+      alert("⚠️ 後端連線失敗，請檢查 Render 是否啟動");
       console.error('❌ 上傳錯誤:', err);
     }
   }
@@ -55,7 +55,7 @@ export async function loadWardrobe(userId) {
     const data = await res.json();
     displayImages(data.images);
   } catch (err) {
-    alert("⚠️ 無法連接後端，請檢查 ngrok 是否運行");
+    alert("⚠️ 無法連接後端，請檢查 Render 是否運行");
     console.error("❌ 載入衣櫃失敗", err);
   }
 }
