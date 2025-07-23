@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # render.yaml (放在專案根目錄)
 services:
   - type: web
@@ -6,3 +7,13 @@ services:
     buildCommand: "pip install -r requirements.txt"
     startCommand: "python app.py"
     plan: free
+=======
+# render.yaml (放在專案根目錄)
+services:
+  - type: web
+    name: liff-wardrobe-backend
+    env: python
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "python app.py"
+    plan: free
+>>>>>>> 2bbfa7a7c2328490db4598e217cfabed6bc0ed59

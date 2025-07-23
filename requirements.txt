@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 Flask==3.0.3
 Flask-Cors==4.0.0
 Werkzeug==3.0.2
@@ -5,4 +6,13 @@ gunicorn
 requests
 huggingface_hub>=0.23.0
 google-cloud-storage
+=======
+Flask==3.0.3
+Flask-Cors==4.0.0
+Werkzeug==3.0.2
+gunicorn
+requests
+huggingface_hub>=0.23.0
+google-cloud-storage
+>>>>>>> 2bbfa7a7c2328490db4598e217cfabed6bc0ed59
 google-cloud-firestore
