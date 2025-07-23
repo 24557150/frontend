@@ -1,6 +1,7 @@
 export const backendURL = 'https://ai-outfit-1027775725754.asia-east1.run.app';
 
 async function uploadImages() {
+  console.log("準備上傳圖片");
   const input = document.getElementById('image-input');
   const category = document.getElementById('category').value;
   const userId = window.userId;
