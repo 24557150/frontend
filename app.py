@@ -41,9 +41,9 @@ def close_db(exception=None):
     if db:
         db.close()
 
-def upload_image_to_gcs(local_path, bucket_name):
+def upload_image_to_gcs(local_path, GCS_BUCKE):
     client = storage.Client()
-    bucket = client.bucket(bucket_name)
+    bucket = client.bucket(GCS_BUCKE)
     blob_name = f"{uuid.uuid4().hex}_{os.path.basename(local_path)}"
     blob = bucket.blob(blob_name)
     blob.upload_from_filename(local_path)
