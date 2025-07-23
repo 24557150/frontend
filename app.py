@@ -1,6 +1,6 @@
 from flask import Flask, request, jsonify, g
 from flask_cors import CORS
-import os, sqlite3, uuid
+import os, sqlite3, uuid, datetime
 from werkzeug.utils import secure_filename
 from google.cloud import storage
 
@@ -44,11 +44,22 @@ def close_db(exception=None):
 def upload_image_to_gcs(local_path, bucket_name):
     client = storage.Client()
     bucket = client.bucket(bucket_name)
+    # 使用 uuid 保證檔名唯一，避免覆蓋
     blob_name = f"{uuid.uuid4().hex}_{os.path.basename(local_path)}"
     blob = bucket.blob(blob_name)
     blob.upload_from_filename(local_path)
-    blob.make_public()
-    return blob.public_url
+    return blob_name  # 只回傳 GCS 上的 blob 路徑
+
+def get_signed_url(bucket_name, blob_name, expire_minutes=60):
+    client = storage.Client()
+    bucket = client.bucket(bucket_name)
+    blob = bucket.blob(blob_name)
+    url = blob.generate_signed_url(
+        version='v4',
+        expiration=datetime.timedelta(minutes=expire_minutes),
+        method='GET'
+    )
+    return url
 
 @app.route('/upload', methods=['POST'])
 def upload():
@@ -68,18 +79,19 @@ def upload():
     # 直接讓 tags/caption 為空
     tags = ""
 
-    # 上傳到 Cloud Storage
-    gcs_url = upload_image_to_gcs(filepath, GCS_BUCKET)
+    # 上傳到 Cloud Storage，取得 blob 名稱
+    blob_name = upload_image_to_gcs(filepath, GCS_BUCKET)
 
     db = get_db()
     db.execute(
         "INSERT INTO wardrobe (user_id, filename, category, tags) VALUES (?, ?, ?, ?)",
-        (user_id, filename, category, tags)
+        (user_id, blob_name, category, tags)
     )
     db.commit()
 
-    # 回傳 GCS 圖片網址
-    return jsonify({"status": "ok", "path": gcs_url, "category": category, "tags": tags})
+    # 回傳 GCS 簽名網址
+    signed_url = get_signed_url(GCS_BUCKET, blob_name)
+    return jsonify({"status": "ok", "path": signed_url, "category": category, "tags": tags})
 
 @app.route('/wardrobe', methods=['GET'])
 def wardrobe():
@@ -98,8 +110,9 @@ def wardrobe():
 
     images = []
     for row in rows:
+        signed_url = get_signed_url(GCS_BUCKET, row['filename'])
         images.append({
-            "path": f"https://storage.googleapis.com/{GCS_BUCKET}/{row['filename']}",
+            "path": signed_url,
             "category": row['category'],
             "tags": row['tags'] or ''
         })
@@ -117,20 +130,30 @@ def delete():
     db = get_db()
     deleted = 0
     for url in paths:
-        if url.startswith(f"https://storage.googleapis.com/{GCS_BUCKET}/"):
-            filename = url.split(f"/{GCS_BUCKET}/")[-1]
-            try:
-                client = storage.Client()
-                bucket = client.bucket(GCS_BUCKET)
-                blob = bucket.blob(filename)
-                blob.delete()
-            except Exception as e:
-                print(f"[WARN] GCS 刪除失敗: {e}")
-            db.execute(
-                "DELETE FROM wardrobe WHERE user_id=? AND filename=?",
-                (user_id, filename)
-            )
-            deleted += 1
+        # 從簽名網址或 GCS 連結擷取 blob 名稱
+        # 允許前端傳 GCS URL 也能刪除
+        if "storage.googleapis.com" in url:
+            filename = url.split("/")[-1].split("?")[0]
+        elif "X-Goog-Algorithm" in url:
+            # 從簽名網址擷取 blob 名稱（這邊只取斜線前一段）
+            # 如 https://storage.googleapis.com/mwardrobe/xxxx.jpg?X-Goog-Algorithm=...
+            filename = url.split("/")[-1].split("?")[0]
+        else:
+            filename = url  # 若直接傳 filename
+
+        try:
+            client = storage.Client()
+            bucket = client.bucket(GCS_BUCKET)
+            blob = bucket.blob(filename)
+            blob.delete()
+        except Exception as e:
+            print(f"[WARN] GCS 刪除失敗: {e}")
+
+        db.execute(
+            "DELETE FROM wardrobe WHERE user_id=? AND filename=?",
+            (user_id, filename)
+        )
+        deleted += 1
     db.commit()
     return jsonify({"status": "ok", "deleted": deleted})
 
@@ -141,4 +164,3 @@ def home():
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
-
