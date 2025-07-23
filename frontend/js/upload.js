@@ -25,7 +25,6 @@ async function uploadImages() {
         loadWardrobe();
       }
     } catch (err) {
-      // alert("⚠️ 後端連線失敗，請檢查 ngrok 是否啟動");
       console.error('❌ 上傳錯誤:', err);
     }
   }
@@ -41,7 +40,6 @@ async function loadWardrobe(category = "all") {
     const data = await res.json();
     displayImages(data.images);
   } catch (err) {
-    // alert("⚠️ 無法連接後端，請檢查 ngrok 是否運行");
     console.error("❌ 載入衣櫃失敗", err);
   }
 }
@@ -121,7 +119,6 @@ async function deleteSelected() {
       loadWardrobe();
     }
   } catch (err) {
-    // alert("刪除失敗，請重試！");
     console.error("❌ 刪除錯誤", err);
   }
 }
@@ -138,4 +135,5 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('shoes-button').addEventListener('click', () => loadWardrobe("shoes"));
 });
 
-window.loadWardrobe = loadWardrobe;
+// 只保留這一行作為 module export（讓 liff-init.js 能 import）
+export { loadWardrobe };
