@@ -1,6 +1,6 @@
 from flask import Flask, request, jsonify, g
 from flask_cors import CORS
-import os, sqlite3, base64, requests, uuid
+import os, sqlite3, uuid
 from werkzeug.utils import secure_filename
 from google.cloud import storage
 
@@ -15,27 +15,6 @@ os.makedirs(DB_DIR, exist_ok=True)
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 GCS_BUCKET = "mwardrobe"  # 你的 bucket 名稱
-
-# Hugging Face Space API
-BLIP_API_URL = "https://yushon-blip-caption-service.hf.space/run/predict"
-
-def get_caption(image_path):
-    try:
-        with open(image_path, "rb") as f:
-            img_bytes = f.read()
-        img_b64 = base64.b64encode(img_bytes).decode("utf-8")
-        response = requests.post(BLIP_API_URL, json={
-            "data": [f"data:image/png;base64,{img_b64}"]
-        }, timeout=60)
-        result = response.json()
-        caption = ""
-        if isinstance(result, dict) and "data" in result and isinstance(result["data"], list):
-            caption = result["data"][0]
-        print(f"[DEBUG] Caption result: {caption}")
-        return caption
-    except Exception as e:
-        print(f"[ERROR] BLIP API 調用錯誤: {e}")
-        return ""
 
 def get_db():
     if 'db' not in g:
@@ -86,8 +65,8 @@ def upload():
     filepath = os.path.join(save_dir, filename)
     image.save(filepath)
 
-    # 調用 BLIP 模型生成 caption
-    tags = get_caption(filepath)
+    # 直接讓 tags/caption 為空
+    tags = ""
 
     # 上傳到 Cloud Storage
     gcs_url = upload_image_to_gcs(filepath, GCS_BUCKET)
@@ -117,13 +96,10 @@ def wardrobe():
         params.append(category)
     rows = db.execute(query, params).fetchall()
 
-    # 注意：這裡用 GCS 圖片網址（你也可存在 DB，但這版用規則拼出，或用前端吃 /upload 回傳的 path）
     images = []
     for row in rows:
-        # 這邊其實建議存下 gcs_url 到 db，這樣刪除時才能對應，不然只能用 filename 硬拼
         images.append({
-            # "path": f"/static/uploads/{user_id}/{row['category']}/{row['filename']}", # 原本本地路徑
-            "path": f"https://storage.googleapis.com/{GCS_BUCKET}/{row['filename']}",   # GCS 網址
+            "path": f"https://storage.googleapis.com/{GCS_BUCKET}/{row['filename']}",
             "category": row['category'],
             "tags": row['tags'] or ''
         })
@@ -141,7 +117,6 @@ def delete():
     db = get_db()
     deleted = 0
     for url in paths:
-        # GCS 圖片網址格式 https://storage.googleapis.com/mwardrobe/xxx.png
         if url.startswith(f"https://storage.googleapis.com/{GCS_BUCKET}/"):
             filename = url.split(f"/{GCS_BUCKET}/")[-1]
             try:
@@ -151,7 +126,6 @@ def delete():
                 blob.delete()
             except Exception as e:
                 print(f"[WARN] GCS 刪除失敗: {e}")
-            # 刪 DB（假設 DB 仍以 filename 當 key）
             db.execute(
                 "DELETE FROM wardrobe WHERE user_id=? AND filename=?",
                 (user_id, filename)
