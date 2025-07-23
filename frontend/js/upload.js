@@ -1,4 +1,4 @@
-export const backendURL = 'https://liff-test-9xse.onrender.com';
+export const backendURL = 'https://ai-outfit-1027775725754.asia-east1.run.app';
 
 document.addEventListener('DOMContentLoaded', () => {
   const uploadBtn = document.getElementById('upload-button');

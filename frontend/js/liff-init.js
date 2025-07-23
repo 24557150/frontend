@@ -1,5 +1,5 @@
 // frontend/js/liff-init.js
-export const backendURL = 'https://liff-test-9xse.onrender.com';
+export const backendURL = 'https://ai-outfit-1027775725754.asia-east1.run.app';
 
 import { loadWardrobe } from './upload.js';
 
