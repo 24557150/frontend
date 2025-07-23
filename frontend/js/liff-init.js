@@ -1,4 +1,3 @@
-// frontend/js/liff-init.js
 export const backendURL = 'https://ai-outfit-1027775725754.asia-east1.run.app';
 
 import { loadWardrobe } from './upload.js';
@@ -30,4 +29,5 @@ async function initializeLiff() {
   }
 }
 
+// 這行確保頁面載入自動執行（你目前版本已用 DOMContentLoaded 綁定，以下皆可）
 document.addEventListener("DOMContentLoaded", initializeLiff);
