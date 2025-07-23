@@ -1,131 +1,141 @@
 export const backendURL = 'https://ai-outfit-1027775725754.asia-east1.run.app';
 
-document.addEventListener('DOMContentLoaded', () => {
-  const uploadBtn = document.getElementById('upload-button');
-  if (uploadBtn) uploadBtn.addEventListener('click', uploadImages);
-
-  const deleteBtn = document.getElementById('delete-button');
-  if (deleteBtn) deleteBtn.addEventListener('click', deleteSelected);
-
-  const categories = ['all', 'top', 'bottom', 'skirt', 'dress', 'shoes'];
-  categories.forEach(cat => {
-    const btn = document.getElementById(`${cat}-button`);
-    if (btn) btn.addEventListener('click', () => filterCategory(cat));
-  });
-
-  const userId = localStorage.getItem('user_id');
-  if (userId) loadWardrobe(userId);
-});
-
 async function uploadImages() {
   const input = document.getElementById('image-input');
   const category = document.getElementById('category').value;
-  const userId = localStorage.getItem('user_id');
-  if (!input.files.length || !category || !userId) {
-    alert('請選擇圖片與分類，並確認已登入');
-    return;
-  }
-  for (const file of input.files) {
+  const userId = window.userId;
+  if (!userId || !category) return;
+
+  const files = input.files;
+  if (!files.length) return;
+
+  for (const file of files) {
     const formData = new FormData();
     formData.append('image', file);
     formData.append('category', category);
     formData.append('user_id', userId);
+
     try {
-      await fetch(`${backendURL}/upload`, {
+      const res = await fetch(`${backendURL}/upload`, {
         method: 'POST',
         body: formData,
-        headers: { 'ngrok-skip-browser-warning': 'any' },
-        credentials: 'include'
       });
+      const data = await res.json();
+      if (data.status === 'ok') {
+        loadWardrobe();
+      }
     } catch (err) {
-      alert("⚠️ 後端連線失敗，請檢查 ngrok 是否啟動");
+      // alert("⚠️ 後端連線失敗，請檢查 ngrok 是否啟動");
       console.error('❌ 上傳錯誤:', err);
     }
   }
-  await loadWardrobe(userId);
-  input.value = '';
 }
 
-export async function loadWardrobe(userId) {
+async function loadWardrobe(category = "all") {
+  const userId = window.userId;
+  if (!userId) return;
+
   try {
-    const res = await fetch(`${backendURL}/wardrobe?user_id=${userId}`, {
-      headers: { 'ngrok-skip-browser-warning': 'any' },
-      credentials: 'include'
-    });
+    const url = `${backendURL}/wardrobe?user_id=${userId}&category=${category}`;
+    const res = await fetch(url);
     const data = await res.json();
     displayImages(data.images);
   } catch (err) {
-    alert("⚠️ 無法連接後端，請檢查 ngrok 是否運行");
+    // alert("⚠️ 無法連接後端，請檢查 ngrok 是否運行");
     console.error("❌ 載入衣櫃失敗", err);
   }
 }
 
 function displayImages(images) {
-  const categories = ['top', 'bottom', 'skirt', 'dress', 'shoes'];
+  const imageList = document.getElementById("image-list");
+  imageList.innerHTML = "";
+
+  const categories = ["top", "bottom", "skirt", "dress", "shoes"];
+  const categoryTitles = {
+    "top": "上衣",
+    "bottom": "褲子",
+    "skirt": "裙子",
+    "dress": "洋裝",
+    "shoes": "鞋子"
+  };
+
   categories.forEach(cat => {
-    const container = document.getElementById(`${cat}-container`);
-    if (container) container.innerHTML = "";
-  });
+    const title = document.createElement("div");
+    title.textContent = categoryTitles[cat] || cat;
+    title.style.fontWeight = "bold";
+    title.style.fontSize = "1.3em";
+    title.style.margin = "30px 0 10px 0";
+    imageList.appendChild(title);
 
-  images.forEach(img => {
-    const fullPath = `${backendURL}${img.path}`;
-    const container = document.getElementById(`${img.category}-container`);
-    if (!container) return;
+    const row = document.createElement("div");
+    row.style.overflowX = "auto";
+    row.style.whiteSpace = "nowrap";
+    imageList.appendChild(row);
 
-    const wrapper = document.createElement("div");
-    wrapper.className = `image-item ${img.category}`;
-    wrapper.style.display = "inline-block";
-    wrapper.style.margin = "5px";
-    wrapper.style.textAlign = "center";
+    images.filter(img => img.category === cat).forEach(img => {
+      const wrapper = document.createElement("div");
+      wrapper.className = "image-item";
+      wrapper.style.display = "inline-block";
+      wrapper.style.margin = "10px";
+      wrapper.style.textAlign = "center";
 
-    const imgElement = document.createElement("img");
-    imgElement.src = fullPath;
-    imgElement.style.width = "150px";
-    imgElement.style.height = "150px";
-    imgElement.style.objectFit = "cover";
-    imgElement.style.borderRadius = "8px";
+      const imgElement = document.createElement("img");
+      imgElement.src = img.path;
+      imgElement.style.width = "150px";
+      imgElement.style.borderRadius = "8px";
 
-    const caption = document.createElement("div");
-    caption.className = "caption-text";
-    caption.innerText = img.tags || "(描述生成中...)";
+      const caption = document.createElement("div");
+      caption.style.fontSize = "0.9em";
+      caption.textContent = img.tags ? img.tags : "(描述生成中...)";
+      caption.style.margin = "6px 0 4px 0";
 
-    const checkbox = document.createElement("input");
-    checkbox.type = "checkbox";
-    checkbox.dataset.path = img.path;
-    checkbox.style.marginTop = "5px";
+      const checkbox = document.createElement("input");
+      checkbox.type = "checkbox";
+      checkbox.dataset.path = img.path;
+      checkbox.style.marginTop = "5px";
 
-    wrapper.appendChild(imgElement);
-    wrapper.appendChild(caption);
-    wrapper.appendChild(checkbox);
-    container.appendChild(wrapper);
-  });
-}
-
-function filterCategory(category) {
-  document.querySelectorAll('.category-section').forEach(sec => {
-    sec.style.display = (category === 'all' || sec.id.startsWith(category)) ? 'block' : 'none';
+      wrapper.appendChild(imgElement);
+      wrapper.appendChild(caption);
+      wrapper.appendChild(checkbox);
+      row.appendChild(wrapper);
+    });
   });
 }
 
 async function deleteSelected() {
-  const checkboxes = document.querySelectorAll('input[type="checkbox"]:checked');
+  const userId = window.userId;
+  if (!userId) return;
+  const checkboxes = document.querySelectorAll("#image-list input[type=checkbox]:checked");
+  if (!checkboxes.length) return;
+
   const paths = Array.from(checkboxes).map(cb => cb.dataset.path);
-  const userId = localStorage.getItem('user_id');
-  if (!paths.length) return alert('請選擇要刪除的圖片');
 
   try {
-    await fetch(`${backendURL}/delete`, {
+    const res = await fetch(`${backendURL}/delete`, {
       method: 'POST',
-      headers: {
-        'ngrok-skip-browser-warning': 'any',
-        'Content-Type': 'application/json'
-      },
-      credentials: 'include',
-      body: JSON.stringify({ user_id: userId, paths })
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ user_id: userId, paths }),
     });
-    await loadWardrobe(userId);
+    const data = await res.json();
+    if (data.status === 'ok') {
+      loadWardrobe();
+    }
   } catch (err) {
-    alert("⚠️ 無法連接後端");
-    console.error("❌ 刪除錯誤:", err);
+    // alert("刪除失敗，請重試！");
+    console.error("❌ 刪除錯誤", err);
   }
 }
+
+// 按鈕綁定
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('upload-button').addEventListener('click', uploadImages);
+  document.getElementById('delete-button').addEventListener('click', deleteSelected);
+  document.getElementById('all-button').addEventListener('click', () => loadWardrobe("all"));
+  document.getElementById('top-button').addEventListener('click', () => loadWardrobe("top"));
+  document.getElementById('bottom-button').addEventListener('click', () => loadWardrobe("bottom"));
+  document.getElementById('skirt-button').addEventListener('click', () => loadWardrobe("skirt"));
+  document.getElementById('dress-button').addEventListener('click', () => loadWardrobe("dress"));
+  document.getElementById('shoes-button').addEventListener('click', () => loadWardrobe("shoes"));
+});
+
+window.loadWardrobe = loadWardrobe;
