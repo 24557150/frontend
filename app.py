@@ -3,6 +3,7 @@ from flask_cors import CORS
 import os, uuid, datetime
 from werkzeug.utils import secure_filename
 from google.cloud import storage, firestore # 導入 firestore
+import json
 
 app = Flask(__name__, static_folder="static", static_url_path="/static")
 CORS(app, supports_credentials=True)
