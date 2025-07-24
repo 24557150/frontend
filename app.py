@@ -32,7 +32,7 @@ def get_gcs_client():
     if _gcs_client_instance is None:
         # 嘗試從環境變數 GCP_SECRET_KEY 獲取 JSON 憑證字符串
         gcs_credentials_json = os.environ.get("GCP_SECRET_KEY")
-        
+
         if gcs_credentials_json:
             try:
                 # 直接解析 JSON 字符串
