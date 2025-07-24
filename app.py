@@ -11,18 +11,20 @@ CORS(app, supports_credentials=True)
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DB_DIR = os.path.join(BASE_DIR, "database")
 
-# --- 關鍵修改 1: 將 UPLOAD_FOLDER 指向 /tmp/uploads，這是 Cloud Run 推薦的臨時路徑 ---
+# --- 關鍵修改 1: 將 UPLOAD_FOLDER 指向 /tmp/uploads ---
+# Cloud Run 的 /tmp 目錄是唯一保證可寫入且適合臨時文件的位置。
 UPLOAD_FOLDER = os.path.join("/tmp", "uploads") 
 
 DATABASE = os.path.join(DB_DIR, "db.sqlite")
 
+# 確保目錄存在
 os.makedirs(DB_DIR, exist_ok=True)
 os.makedirs(UPLOAD_FOLDER, exist_ok=True) # 確保 /tmp/uploads 目錄存在
 
 GCS_BUCKET = "cloths"  # 你的 bucket 名稱
 
 # --- 關鍵修改 2: GCS Client 初始化邏輯 ---
-# 這裡我們將創建一個全域的 GCS Client 實例，確保它使用正確的憑證
+# 創建一個全域的 GCS Client 實例，確保它使用正確的憑證
 _gcs_client_instance = None 
 
 def get_gcs_client():
@@ -37,7 +39,7 @@ def get_gcs_client():
                 credentials_info = json.loads(gcs_credentials_json)
                 # 使用解析後的憑證資訊來初始化 Client
                 _gcs_client_instance = storage.Client.from_service_account_info(credentials_info)
-                print("DEBUG: GCS Client initialized from GCP_SECRET_KEY.")
+                print("DEBUG: GCS Client initialized from GCP_SECRET_KEY (with private key).")
             except json.JSONDecodeError as e:
                 print(f"ERROR: Failed to parse GCP_SECRET_KEY JSON: {e}")
                 # 如果解析失敗，則回退到預設憑證（這會導致簽名失敗，但至少應用程式不會崩潰）
@@ -49,21 +51,48 @@ def get_gcs_client():
                 print("DEBUG: GCS Client initialized with default credentials due to other initialization error.")
         else:
             # 如果沒有 GCP_SECRET_KEY 環境變數，則使用預設的應用程式預設憑證 (ADC)
-            # 在 Cloud Run 上，這通常是 Compute Engine 服務帳戶，但不能用於簽名
+            # 在 Cloud Run 上，這通常是 Compute Engine 服務帳戶，它不包含私鑰，無法用於簽名。
             _gcs_client_instance = storage.Client()
             print("DEBUG: GCS Client initialized with default credentials (no GCP_SECRET_KEY).")
     return _gcs_client_instance
 
-# ... (get_db 和 close_db 函式不變)
+# --- 數據庫相關函式保持不變 ---
+def get_db():
+    if 'db' not in g:
+        g.db = sqlite3.connect(DATABASE)
+        g.db.row_factory = sqlite3.Row
+        g.db.execute("""
+        CREATE TABLE IF NOT EXISTS wardrobe (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id TEXT NOT NULL,
+            filename TEXT NOT NULL,
+            category TEXT NOT NULL,
+            tags TEXT
+        )""")
+        try:
+            # 檢查並添加 tags 欄位，避免重複添加錯誤
+            g.db.execute("SELECT tags FROM wardrobe LIMIT 1")
+        except sqlite3.OperationalError:
+            g.db.execute("ALTER TABLE wardrobe ADD COLUMN tags TEXT")
+        g.db.commit()
+    return g.db
 
+@app.teardown_appcontext
+def close_db(exception=None):
+    db = g.pop('db', None)
+    if db:
+        db.close()
+
+# --- GCS 操作函式使用新的 Client 獲取方法 ---
 def upload_image_to_gcs(local_path, bucket_name):
     client = get_gcs_client() # 使用我們上面定義的獲取客戶端函式
     bucket = client.bucket(bucket_name)
+    # 使用 uuid 保證檔名唯一，避免覆蓋
     blob_name = f"{uuid.uuid4().hex}_{os.path.basename(local_path)}"
     blob = bucket.blob(blob_name)
     blob.upload_from_filename(local_path)
     print(f"DEBUG: File {local_path} uploaded to GCS as {blob_name}.")
-    return blob_name
+    return blob_name  # 只回傳 GCS 上的 blob 路徑
 
 def get_signed_url(bucket_name, blob_name, expire_minutes=60):
     client = get_gcs_client() # 使用我們上面定義的獲取客戶端函式
@@ -77,6 +106,7 @@ def get_signed_url(bucket_name, blob_name, expire_minutes=60):
     print(f"DEBUG: Generated signed URL for {blob_name}.")
     return url
 
+# --- 路由部分 ---
 @app.route('/upload', methods=['POST'])
 def upload():
     image = request.files.get('image')
@@ -85,7 +115,7 @@ def upload():
     if not image or not category or not user_id:
         return jsonify({"status": "error", "message": "缺少必要參數"}), 400
 
-    # `save_dir` 現在會位於 /tmp 下
+    # `save_dir` 現在會位於 /tmp 下，確保可寫入
     save_dir = os.path.join(UPLOAD_FOLDER, user_id, category)
     os.makedirs(save_dir, exist_ok=True)
 
@@ -93,7 +123,8 @@ def upload():
     filepath = os.path.join(save_dir, filename)
     image.save(filepath)
 
-    tags = "" # 保持為空
+    # 直接讓 tags/caption 為空
+    tags = ""
 
     try:
         # 上傳到 Cloud Storage，取得 blob 名稱
@@ -157,12 +188,16 @@ def delete():
     db = get_db()
     deleted = 0
     for url in paths:
+        # 從簽名網址或 GCS 連結擷取 blob 名稱
+        # 允許前端傳 GCS URL 也能刪除
         if "storage.googleapis.com" in url:
             filename = url.split("/")[-1].split("?")[0]
         elif "X-Goog-Algorithm" in url:
+            # 從簽名網址擷取 blob 名稱（這邊只取斜線前一段）
+            # 如 https://storage.googleapis.com/mwardrobe/xxxx.jpg?X-Goog-Algorithm=...
             filename = url.split("/")[-1].split("?")[0]
         else:
-            filename = url
+            filename = url  # 若直接傳 filename
 
         try:
             client = get_gcs_client() # 使用我們上面定義的獲取客戶端函式
@@ -188,4 +223,11 @@ def home():
 if __name__ == '__main__':
     # Cloud Run 預設將 PORT 設定為 8080
     port = int(os.environ.get("PORT", 8080))
+    # 在應用程式啟動時預先初始化 GCS 客戶端，以便在啟動日誌中捕獲任何憑證問題
+    with app.app_context():
+        try:
+            get_gcs_client()
+            print("INFO: GCS Client successfully initialized on app startup.")
+        except Exception as e:
+            print(f"CRITICAL ERROR: GCS Client failed to initialize on app startup: {e}")
     app.run(host="0.0.0.0", port=port)
