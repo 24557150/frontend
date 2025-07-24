@@ -8,14 +8,15 @@ import json # 確保有導入 json 模組
 app = Flask(__name__, static_folder="static", static_url_path="/static")
 CORS(app, supports_credentials=True)
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DB_DIR = os.path.join(BASE_DIR, "database")
+# BASE_DIR 不再用於資料庫路徑，但如果其他部分有用到可以保留
+# BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
-# --- 關鍵修改 1: 將 UPLOAD_FOLDER 指向 /tmp/uploads ---
+# --- 關鍵修改 1: 將 DB_DIR 和 DATABASE 指向 /tmp ---
 # Cloud Run 的 /tmp 目錄是唯一保證可寫入且適合臨時文件的位置。
-UPLOAD_FOLDER = os.path.join("/tmp", "uploads") 
+DB_DIR = os.path.join("/tmp", "database") # 將資料庫目錄放在 /tmp 下
+UPLOAD_FOLDER = os.path.join("/tmp", "uploads") # 保持 /tmp/uploads 不變
 
-DATABASE = os.path.join(DB_DIR, "db.sqlite")
+DATABASE = os.path.join(DB_DIR, "db.sqlite") # 資料庫檔案也在 /tmp 下
 
 # 確保目錄存在
 os.makedirs(DB_DIR, exist_ok=True)
@@ -23,7 +24,7 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True) # 確保 /tmp/uploads 目錄存在
 
 GCS_BUCKET = "cloths"  # 你的 bucket 名稱
 
-# --- 關鍵修改 2: GCS Client 初始化邏輯 (這段是這次最關鍵的修改，直接用 from_service_account_info) ---
+# --- 關鍵修改 2: GCS Client 初始化邏輯 ---
 # 創建一個全域的 GCS Client 實例，確保它使用正確的憑證
 _gcs_client_instance = None 
 
@@ -56,9 +57,11 @@ def get_gcs_client():
             print("DEBUG: GCS Client initialized with default credentials (no GCP_SECRET_KEY).")
     return _gcs_client_instance
 
-# --- 數據庫相關函式保持不變 ---
+# --- 數據庫相關函式 ---
 def get_db():
     if 'db' not in g:
+        # 確保資料庫目錄存在，因為它在 /tmp 下，每次實例啟動都需要創建
+        os.makedirs(DB_DIR, exist_ok=True) 
         g.db = sqlite3.connect(DATABASE)
         g.db.row_factory = sqlite3.Row
         g.db.execute("""
