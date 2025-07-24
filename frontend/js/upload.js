@@ -1,4 +1,4 @@
-export const backendURL = 'https://ai-outfit-1027775725754.asia-east1.run.app';
+export const backendURL = 'https://liff-test-941374905030.asia-east1.run.app';
 
 async function uploadImages() {
   console.log("準備上傳圖片");

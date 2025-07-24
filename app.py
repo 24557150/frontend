@@ -14,7 +14,7 @@ DATABASE = os.path.join(DB_DIR, "db.sqlite")
 os.makedirs(DB_DIR, exist_ok=True)
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
-GCS_BUCKET = "mwardrobe"  # 你的 bucket 名稱
+GCS_BUCKET = "cloths"  # 你的 bucket 名稱
 
 def get_db():
     if 'db' not in g:
