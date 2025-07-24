@@ -1,6 +1,6 @@
 from flask import Flask, request, jsonify, g
 from flask_cors import CORS
-import os, sqlite3, uuid, datetime
+import os, sqlite3, uuid, datetime, json
 from werkzeug.utils import secure_filename
 from google.cloud import storage
 
@@ -16,6 +16,29 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 GCS_BUCKET = "cloths"  # 你的 bucket 名稱
 
+# --- Google Cloud 認證邏輯 ---
+# 從環境變數讀取 GCP 服務帳戶金鑰 JSON 字串
+# 這個環境變數將由 GitHub Actions (或 Cloud Run 配置) 傳入
+GCP_CREDENTIALS_JSON = os.environ.get('GCP_SECRET_KEY')
+
+if GCP_CREDENTIALS_JSON:
+    # 如果金鑰存在，將其寫入一個臨時檔案
+    # google-cloud-storage library 會自動偵測 GOOGLE_APPLICATION_CREDENTIALS
+    # 環境變數指向的檔案路徑
+    CREDENTIALS_FILE_PATH = os.path.join(BASE_DIR, 'gcp_credentials.json')
+    try:
+        with open(CREDENTIALS_FILE_PATH, 'w') as f:
+            f.write(GCP_CREDENTIALS_JSON)
+        os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = CREDENTIALS_FILE_PATH
+        print("Google Cloud 憑證已從環境變數載入並設定。")
+    except Exception as e:
+        print(f"寫入憑證檔案失敗: {e}")
+        # 如果無法寫入檔案，則可能無法使用該憑證，會嘗試預設憑證
+else:
+    print("未找到 GCP_SECRET_KEY 環境變數，將嘗試使用預設憑證（例如 Cloud Run 服務帳戶）。")
+# --- 結束 Google Cloud 認證邏輯 ---
+
+
 def get_db():
     if 'db' not in g:
         g.db = sqlite3.connect(DATABASE)
@@ -29,9 +52,10 @@ def get_db():
             tags TEXT
         )""")
         try:
-            g.db.execute("ALTER TABLE wardrobe ADD COLUMN tags TEXT")
+            # 檢查並添加 tags 欄位，避免重複添加錯誤
+            g.db.execute("SELECT tags FROM wardrobe LIMIT 1")
         except sqlite3.OperationalError:
-            pass
+            g.db.execute("ALTER TABLE wardrobe ADD COLUMN tags TEXT")
         g.db.commit()
     return g.db
 
@@ -42,6 +66,7 @@ def close_db(exception=None):
         db.close()
 
 def upload_image_to_gcs(local_path, bucket_name):
+    # storage.Client() 會自動使用 GOOGLE_APPLICATION_CREDENTIALS 環境變數指定的憑證
     client = storage.Client()
     bucket = client.bucket(bucket_name)
     # 使用 uuid 保證檔名唯一，避免覆蓋
@@ -51,6 +76,7 @@ def upload_image_to_gcs(local_path, bucket_name):
     return blob_name  # 只回傳 GCS 上的 blob 路徑
 
 def get_signed_url(bucket_name, blob_name, expire_minutes=60):
+    # storage.Client() 會自動使用 GOOGLE_APPLICATION_CREDENTIALS 環境變數指定的憑證
     client = storage.Client()
     bucket = client.bucket(bucket_name)
     blob = bucket.blob(blob_name)
@@ -142,6 +168,7 @@ def delete():
             filename = url  # 若直接傳 filename
 
         try:
+            # storage.Client() 會自動使用 GOOGLE_APPLICATION_CREDENTIALS 環境變數指定的憑證
             client = storage.Client()
             bucket = client.bucket(GCS_BUCKET)
             blob = bucket.blob(filename)
@@ -162,5 +189,6 @@ def home():
     return jsonify({"status": "running", "message": "Flask 伺服器運行中"})
 
 if __name__ == '__main__':
-    port = int(os.environ.get("PORT", 5000))
+    # Cloud Run 預設將 PORT 設定為 8080
+    port = int(os.environ.get("PORT", 8080))
     app.run(host="0.0.0.0", port=port)
