@@ -1,18 +1,17 @@
 export const backendURL = 'https://liff-test-941374905030.asia-east1.run.app';
 
 async function uploadImages() {
-  console.log("準備上傳圖片 - uploadImages 函式開始執行"); // 執行到這裡，表示按鈕事件被觸發
+  console.log("DEBUG: 準備上傳圖片 - uploadImages 函式開始執行");
   
   const input = document.getElementById('image-input');
   const category = document.getElementById('category').value;
-  const userId = window.userId; // 這裡獲取 userId
+  const userId = window.userId;
 
-  console.log("DEBUG: 獲取到的 userId:", userId);
-  console.log("DEBUG: 獲取到的 category:", category);
+  console.log("DEBUG: 獲取到的 userId (uploadImages):", userId);
+  console.log("DEBUG: 獲取到的 category (uploadImages):", category);
 
   if (!userId || !category) {
     console.warn("WARN: userId 或 category 缺失，無法上傳。", { userId, category });
-    // 如果這裡 return，Network 標籤會是空的
     return; 
   }
 
@@ -21,7 +20,6 @@ async function uploadImages() {
 
   if (!files.length) {
     console.warn("WARN: 未選擇任何檔案，無法上傳。");
-    // 如果這裡 return，Network 標籤會是空的
     return; 
   }
 
@@ -47,18 +45,19 @@ async function uploadImages() {
 
       if (data.status === 'ok') {
         console.log("INFO: 上傳成功，正在重新載入衣櫃。");
-        loadWardrobe();
+        loadWardrobe(); // 成功後重新載入衣櫃，這會預設載入所有分類
       } else {
         console.error("ERROR: 後端返回錯誤狀態:", data.message);
       }
     } catch (err) {
-      console.error('❌ 上傳錯誤 (Fetch 或 JSON 解析失敗):', err); // 捕捉網路錯誤或 JSON 解析錯誤
+      console.error('❌ 上傳錯誤 (Fetch 或 JSON 解析失敗):', err);
     }
   }
 }
 
 async function loadWardrobe(category = "all") {
   const userId = window.userId;
+  console.log("DEBUG: loadWardrobe 函式開始執行，載入類別:", category, "userId:", userId); // 新增日誌
   if (!userId) {
     console.warn("WARN: 載入衣櫃時 userId 缺失。");
     return;
@@ -66,10 +65,10 @@ async function loadWardrobe(category = "all") {
 
   try {
     const url = `${backendURL}/wardrobe?user_id=${userId}&category=${category}`;
-    console.log("DEBUG: 正在載入衣櫃:", url);
+    console.log("DEBUG: 正在從後端獲取衣櫃數據:", url); // 新增日誌
     const res = await fetch(url);
     const data = await res.json();
-    console.log("DEBUG: 衣櫃數據載入成功:", data);
+    console.log("DEBUG: 後端衣櫃數據載入成功:", data); // 新增日誌，查看所有返回的圖片
     displayImages(data.images);
   } catch (err) {
     console.error("❌ 載入衣櫃失敗", err);
@@ -77,8 +76,10 @@ async function loadWardrobe(category = "all") {
 }
 
 function displayImages(images) {
-  const imageList = document.getElementById("image-list");
-  // 清空現有內容，並保留標題結構
+  console.log("DEBUG: displayImages 函式開始執行，接收到圖片數量:", images.length); // 新增日誌
+  console.log("DEBUG: displayImages 接收到的圖片數據:", images); // 新增日誌，查看具體圖片數據
+
+  // 獲取所有分類的容器
   const categorySections = {
     "top": document.getElementById("top-container"),
     "bottom": document.getElementById("bottom-container"),
@@ -87,15 +88,15 @@ function displayImages(images) {
     "shoes": document.getElementById("shoes-container")
   };
 
-  // 清空所有圖片容器
+  // 清空所有圖片容器的內容
   for (const key in categorySections) {
       if (categorySections[key]) {
           categorySections[key].innerHTML = "";
+          console.log(`DEBUG: 清空容器: ${key}-container`); // 新增日誌
       }
   }
 
-  const categories = ["top", "bottom", "skirt", "dress", "shoes"];
-  // 由於 HTML 已經有固定的標題和容器，我們直接往裡面添加圖片
+  // 將圖片添加到各自的分類容器中
   images.forEach(img => {
     if (categorySections[img.category]) {
       const wrapper = document.createElement("div");
@@ -123,6 +124,9 @@ function displayImages(images) {
       wrapper.appendChild(caption);
       wrapper.appendChild(checkbox);
       categorySections[img.category].appendChild(wrapper);
+      console.log(`DEBUG: 添加圖片到 ${img.category} 分類: ${img.path}`); // 新增日誌
+    } else {
+      console.warn(`WARN: 圖片類別 '${img.category}' 無法識別或對應的容器不存在。圖片路徑: ${img.path}`); // 新增日誌
     }
   });
 }
