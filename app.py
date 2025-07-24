@@ -44,11 +44,10 @@ def close_db(exception=None):
 def upload_image_to_gcs(local_path, bucket_name):
     client = storage.Client()
     bucket = client.bucket(bucket_name)
-    # 使用 uuid 保證檔名唯一，避免覆蓋
     blob_name = f"{uuid.uuid4().hex}_{os.path.basename(local_path)}"
     blob = bucket.blob(blob_name)
     blob.upload_from_filename(local_path)
-    return blob_name  # 只回傳 GCS 上的 blob 路徑
+    return blob_name
 
 def get_signed_url(bucket_name, blob_name, expire_minutes=60):
     client = storage.Client()
@@ -76,10 +75,9 @@ def upload():
     filepath = os.path.join(save_dir, filename)
     image.save(filepath)
 
-    # 直接讓 tags/caption 為空
-    tags = ""
+    tags = ""  # caption/tags 先不使用
 
-    # 上傳到 Cloud Storage，取得 blob 名稱
+    # 上傳到 Cloud Storage
     blob_name = upload_image_to_gcs(filepath, GCS_BUCKET)
 
     db = get_db()
@@ -89,7 +87,6 @@ def upload():
     )
     db.commit()
 
-    # 回傳 GCS 簽名網址
     signed_url = get_signed_url(GCS_BUCKET, blob_name)
     return jsonify({"status": "ok", "path": signed_url, "category": category, "tags": tags})
 
@@ -130,16 +127,12 @@ def delete():
     db = get_db()
     deleted = 0
     for url in paths:
-        # 從簽名網址或 GCS 連結擷取 blob 名稱
-        # 允許前端傳 GCS URL 也能刪除
         if "storage.googleapis.com" in url:
             filename = url.split("/")[-1].split("?")[0]
         elif "X-Goog-Algorithm" in url:
-            # 從簽名網址擷取 blob 名稱（這邊只取斜線前一段）
-            # 如 https://storage.googleapis.com/mwardrobe/xxxx.jpg?X-Goog-Algorithm=...
             filename = url.split("/")[-1].split("?")[0]
         else:
-            filename = url  # 若直接傳 filename
+            filename = url
 
         try:
             client = storage.Client()
