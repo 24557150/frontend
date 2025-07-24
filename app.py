@@ -23,7 +23,7 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True) # 確保 /tmp/uploads 目錄存在
 
 GCS_BUCKET = "cloths"  # 你的 bucket 名稱
 
-# --- 關鍵修改 2: GCS Client 初始化邏輯 (修正版) ---
+# --- 關鍵修改 2: GCS Client 初始化邏輯 (這段是這次最關鍵的修改，直接用 from_service_account_info) ---
 # 創建一個全域的 GCS Client 實例，確保它使用正確的憑證
 _gcs_client_instance = None 
 
