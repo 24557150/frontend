@@ -23,7 +23,7 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True) # 確保 /tmp/uploads 目錄存在
 
 GCS_BUCKET = "cloths"  # 你的 bucket 名稱
 
-# --- 關鍵修改 2: GCS Client 初始化邏輯 ---
+# --- 關鍵修改 2: GCS Client 初始化邏輯 (修正版) ---
 # 創建一個全域的 GCS Client 實例，確保它使用正確的憑證
 _gcs_client_instance = None 
 
@@ -32,12 +32,12 @@ def get_gcs_client():
     if _gcs_client_instance is None:
         # 嘗試從環境變數 GCP_SECRET_KEY 獲取 JSON 憑證字符串
         gcs_credentials_json = os.environ.get("GCP_SECRET_KEY")
-
+        
         if gcs_credentials_json:
             try:
-                # 直接解析 JSON 字符串
+                # 直接解析 JSON 字符串為 Python 字典
                 credentials_info = json.loads(gcs_credentials_json)
-                # 使用解析後的憑證資訊來初始化 Client
+                # 使用解析後的憑證資訊字典來初始化 Client
                 _gcs_client_instance = storage.Client.from_service_account_info(credentials_info)
                 print("DEBUG: GCS Client initialized from GCP_SECRET_KEY (with private key).")
             except json.JSONDecodeError as e:
@@ -123,8 +123,7 @@ def upload():
     filepath = os.path.join(save_dir, filename)
     image.save(filepath)
 
-    # 直接讓 tags/caption 為空
-    tags = ""
+    tags = "" # 保持為空
 
     try:
         # 上傳到 Cloud Storage，取得 blob 名稱
