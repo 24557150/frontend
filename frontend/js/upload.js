@@ -1,4 +1,4 @@
-export const backendURL = 'https://你的spaces帳號-你的空間名.hf.space';
+export const backendURL = 'https://yushon-cloths.hf.space';
 
 async function uploadImages() {
   console.log("準備上傳圖片");
