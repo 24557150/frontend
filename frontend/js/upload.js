@@ -1,4 +1,4 @@
-export const backendURL = 'https://yushon-cloths.hf.space';
+export const backendURL = 'https://liff-test-941374905030.asia-east1.run.app';
 
 async function uploadImages() {
   console.log("準備上傳圖片");
@@ -79,13 +79,13 @@ function displayImages(images) {
       wrapper.style.textAlign = "center";
 
       const imgElement = document.createElement("img");
-      imgElement.src = "data:image/png;base64," + img.path;  // base64 mask
+      imgElement.src = img.path;
       imgElement.style.width = "150px";
       imgElement.style.borderRadius = "8px";
 
       const caption = document.createElement("div");
       caption.style.fontSize = "0.9em";
-      caption.textContent = img.filename ? img.filename : "(未命名)";
+      caption.textContent = img.tags ? img.tags : "(描述生成中...)";
       caption.style.margin = "6px 0 4px 0";
 
       const checkbox = document.createElement("input");
@@ -136,5 +136,5 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('shoes-button').addEventListener('click', () => loadWardrobe("shoes"));
 });
 
-// module export（讓 liff-init.js 能 import）
+// 只保留這一行作為 module export（讓 liff-init.js 能 import）
 export { loadWardrobe };
