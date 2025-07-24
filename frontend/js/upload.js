@@ -1,14 +1,31 @@
 export const backendURL = 'https://liff-test-941374905030.asia-east1.run.app';
 
 async function uploadImages() {
-  console.log("準備上傳圖片");
+  console.log("準備上傳圖片 - uploadImages 函式開始執行"); // 執行到這裡，表示按鈕事件被觸發
+  
   const input = document.getElementById('image-input');
   const category = document.getElementById('category').value;
-  const userId = window.userId;
-  if (!userId || !category) return;
+  const userId = window.userId; // 這裡獲取 userId
+
+  console.log("DEBUG: 獲取到的 userId:", userId);
+  console.log("DEBUG: 獲取到的 category:", category);
+
+  if (!userId || !category) {
+    console.warn("WARN: userId 或 category 缺失，無法上傳。", { userId, category });
+    // 如果這裡 return，Network 標籤會是空的
+    return; 
+  }
 
   const files = input.files;
-  if (!files.length) return;
+  console.log("DEBUG: 選擇的檔案數量:", files.length);
+
+  if (!files.length) {
+    console.warn("WARN: 未選擇任何檔案，無法上傳。");
+    // 如果這裡 return，Network 標籤會是空的
+    return; 
+  }
+
+  console.log("DEBUG: 檔案和資訊都已準備好，開始處理上傳...");
 
   for (const file of files) {
     const formData = new FormData();
@@ -16,29 +33,43 @@ async function uploadImages() {
     formData.append('category', category);
     formData.append('user_id', userId);
 
+    console.log(`DEBUG: 正在上傳檔案: ${file.name}, 大小: ${file.size} bytes`);
+    
     try {
       const res = await fetch(`${backendURL}/upload`, {
         method: 'POST',
         body: formData,
       });
+      
+      console.log("DEBUG: 收到後端響應狀態:", res.status);
       const data = await res.json();
+      console.log("DEBUG: 後端響應數據:", data);
+
       if (data.status === 'ok') {
+        console.log("INFO: 上傳成功，正在重新載入衣櫃。");
         loadWardrobe();
+      } else {
+        console.error("ERROR: 後端返回錯誤狀態:", data.message);
       }
     } catch (err) {
-      console.error('❌ 上傳錯誤:', err);
+      console.error('❌ 上傳錯誤 (Fetch 或 JSON 解析失敗):', err); // 捕捉網路錯誤或 JSON 解析錯誤
     }
   }
 }
 
 async function loadWardrobe(category = "all") {
   const userId = window.userId;
-  if (!userId) return;
+  if (!userId) {
+    console.warn("WARN: 載入衣櫃時 userId 缺失。");
+    return;
+  }
 
   try {
     const url = `${backendURL}/wardrobe?user_id=${userId}&category=${category}`;
+    console.log("DEBUG: 正在載入衣櫃:", url);
     const res = await fetch(url);
     const data = await res.json();
+    console.log("DEBUG: 衣櫃數據載入成功:", data);
     displayImages(data.images);
   } catch (err) {
     console.error("❌ 載入衣櫃失敗", err);
@@ -47,31 +78,26 @@ async function loadWardrobe(category = "all") {
 
 function displayImages(images) {
   const imageList = document.getElementById("image-list");
-  imageList.innerHTML = "";
-
-  const categories = ["top", "bottom", "skirt", "dress", "shoes"];
-  const categoryTitles = {
-    "top": "上衣",
-    "bottom": "褲子",
-    "skirt": "裙子",
-    "dress": "洋裝",
-    "shoes": "鞋子"
+  // 清空現有內容，並保留標題結構
+  const categorySections = {
+    "top": document.getElementById("top-container"),
+    "bottom": document.getElementById("bottom-container"),
+    "skirt": document.getElementById("skirt-container"),
+    "dress": document.getElementById("dress-container"),
+    "shoes": document.getElementById("shoes-container")
   };
 
-  categories.forEach(cat => {
-    const title = document.createElement("div");
-    title.textContent = categoryTitles[cat] || cat;
-    title.style.fontWeight = "bold";
-    title.style.fontSize = "1.3em";
-    title.style.margin = "30px 0 10px 0";
-    imageList.appendChild(title);
+  // 清空所有圖片容器
+  for (const key in categorySections) {
+      if (categorySections[key]) {
+          categorySections[key].innerHTML = "";
+      }
+  }
 
-    const row = document.createElement("div");
-    row.style.overflowX = "auto";
-    row.style.whiteSpace = "nowrap";
-    imageList.appendChild(row);
-
-    images.filter(img => img.category === cat).forEach(img => {
+  const categories = ["top", "bottom", "skirt", "dress", "shoes"];
+  // 由於 HTML 已經有固定的標題和容器，我們直接往裡面添加圖片
+  images.forEach(img => {
+    if (categorySections[img.category]) {
       const wrapper = document.createElement("div");
       wrapper.className = "image-item";
       wrapper.style.display = "inline-block";
@@ -96,8 +122,8 @@ function displayImages(images) {
       wrapper.appendChild(imgElement);
       wrapper.appendChild(caption);
       wrapper.appendChild(checkbox);
-      row.appendChild(wrapper);
-    });
+      categorySections[img.category].appendChild(wrapper);
+    }
   });
 }
 
@@ -126,6 +152,7 @@ async function deleteSelected() {
 
 // 按鈕綁定
 document.addEventListener('DOMContentLoaded', () => {
+  console.log("DEBUG: DOMContentLoaded 事件觸發，開始綁定按鈕。");
   document.getElementById('upload-button').addEventListener('click', uploadImages);
   document.getElementById('delete-button').addEventListener('click', deleteSelected);
   document.getElementById('all-button').addEventListener('click', () => loadWardrobe("all"));
@@ -134,6 +161,7 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('skirt-button').addEventListener('click', () => loadWardrobe("skirt"));
   document.getElementById('dress-button').addEventListener('click', () => loadWardrobe("dress"));
   document.getElementById('shoes-button').addEventListener('click', () => loadWardrobe("shoes"));
+  console.log("DEBUG: 按鈕綁定完成。");
 });
 
 // 只保留這一行作為 module export（讓 liff-init.js 能 import）
