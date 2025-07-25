@@ -3,7 +3,7 @@
 import { backendURL } from './liff-init.js'; 
 
 async function uploadImages() {
-  console.log("DEBUG: 準備上傳圖片 - uploadImages 函式開始執行");
+  console.log("DEBUG: uploadImages 函式被點擊，準備上傳圖片。"); // 新增日誌
   
   const input = document.getElementById('image-input');
   const category = document.getElementById('category').value;
@@ -166,13 +166,27 @@ async function deleteSelected() {
 // 按鈕綁定
 document.addEventListener('DOMContentLoaded', () => {
   console.log("DEBUG: DOMContentLoaded 事件觸發，開始綁定按鈕。");
-  document.getElementById('upload-button').addEventListener('click', uploadImages);
-  document.getElementById('delete-button').addEventListener('click', deleteSelected);
+  const uploadButton = document.getElementById('upload-button');
+  if (uploadButton) {
+    uploadButton.addEventListener('click', uploadImages);
+    console.log("DEBUG: '上傳' 按鈕綁定完成。"); // 新增日誌
+  } else {
+    console.warn("WARN: 找不到 'upload-button' 元素。"); // 新增日誌
+  }
+
+  const deleteButton = document.getElementById('delete-button');
+  if (deleteButton) {
+    deleteButton.addEventListener('click', deleteSelected);
+    console.log("DEBUG: '刪除選取圖片' 按鈕綁定完成。"); // 新增日誌
+  } else {
+    console.warn("WARN: 找不到 'delete-button' 元素。"); // 新增日誌
+  }
+  
   document.getElementById('all-button').addEventListener('click', () => loadWardrobe("all"));
   document.getElementById('top-button').addEventListener('click', () => loadWardrobe("top"));
   document.getElementById('bottom-button').addEventListener('click', () => loadWardrobe("bottom"));
   document.getElementById('skirt-button').addEventListener('click', () => loadWardrobe("skirt"));
   document.getElementById('dress-button').addEventListener('click', () => loadWardrobe("dress"));
   document.getElementById('shoes-button').addEventListener('click', () => loadWardrobe("shoes"));
-  console.log("DEBUG: 按鈕綁定完成。");
+  console.log("DEBUG: 分類按鈕綁定完成。");
 });
