@@ -65,6 +65,7 @@ async function uploadWannabeImages() {
 /**
  * 從後端載入「我想成為」圖片並顯示。
  */
+// 這裡已經有 export 關鍵字，無需在檔案末尾重複導出
 export async function loadWannabeWardrobe() {
   const userId = window.userId;
   console.log("DEBUG: loadWannabeWardrobe 函式開始執行，userId:", userId);
@@ -171,5 +172,4 @@ document.addEventListener('DOMContentLoaded', () => {
   console.log("DEBUG: wannabe-upload.js 按鈕綁定完成。");
 });
 
-// 導出 loadWannabeWardrobe 函數，供 liff-init.js 動態導入
-export { loadWannabeWardrobe };
+// 這裡不再需要 export { loadWannabeWardrobe };
