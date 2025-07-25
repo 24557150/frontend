@@ -7,3 +7,4 @@ huggingface_hub>=0.23.0
 google-cloud-storage
 google-cloud-firestore
 rembg
+onnxruntime

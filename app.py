@@ -52,9 +52,7 @@ def get_firestore_db():
         print("DEBUG: Firestore Client initialized.")
     return _firestore_db_instance
 
-# 修正語法錯誤：將 rembg_session = None 移到 get_rembg_session 內部或使用 _rembg_session
-# 由於 get_rembg_session 內部已經有 global _rembg_session，這裡不需要額外定義
-_rembg_session = None # 確保這是全域變數的初始聲明
+_rembg_session = None 
 def get_rembg_session():
     global _rembg_session
     if _rembg_session is None:
@@ -158,7 +156,7 @@ def wardrobe():
 
     images = []
     try:
-        db = get_firestore_db()
+        db = get_firestore_db() # 確保這裡呼叫的是 get_firestore_db
         query = db.collection('wardrobe').document(user_id).collection('items')
         
         if category and category != "all":
