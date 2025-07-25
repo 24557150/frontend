@@ -13,6 +13,7 @@
     .image-item { display: flex; flex-direction: column; align-items: center; }
     .category-section { margin-bottom: 20px; }
     button { margin: 5px; padding: 8px 12px; }
+    /* 新增導航按鈕樣式 */
     .nav-buttons { margin-bottom: 20px; }
     .nav-buttons button { background-color: #4CAF50; color: white; border: none; padding: 10px 20px; text-align: center; text-decoration: none; display: inline-block; font-size: 16px; margin: 4px 2px; cursor: pointer; border-radius: 5px; }
     .nav-buttons button:hover { background-color: #45a049; }
@@ -32,7 +33,7 @@
       <button type="button" onclick="openWannabeImageSourceSelector()">📷 上傳「我想成為」圖片 (本機 / LINE 拍照/相簿)</button>
     </div>
     <button id="wannabe-upload-button" type="button" style="margin-left: 10px; margin-top: 10px;">上傳</button>
-    <div id="wannabe-status" style="margin-top: 10px; font-weight: bold;"></div>
+    <div id="wannabe-status" style="margin-top: 10px; font-weight: bold;">🔄 等待登入...</div>
     <hr>
     <button id="wannabe-delete-button">刪除選取圖片</button>
 
@@ -43,7 +44,6 @@
   </div>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <script type="module" src="frontend/js/liff-init.js"></script>
-  <script type="module" src="frontend/js/wannabe-upload.js"></script>
   <script>
     function openWannabeImageSourceSelector() {
       document.getElementById('wannabe-image-input').click();

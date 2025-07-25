@@ -2,8 +2,7 @@
 <html lang="zh-Hant">
 <head>
   <meta charset="UTF-8" />
-  <title>👚 衣櫃上傳</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>👚 我的衣櫃</title> <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="stylesheet" href="frontend/style.css">
   <style>
     .scroll-container { display: flex; overflow-x: auto; gap: 10px; padding: 10px; border: 1px solid #ccc; border-radius: 8px; margin-bottom: 20px; }
@@ -12,11 +11,20 @@
     .image-item { display: flex; flex-direction: column; align-items: center; }
     .category-section { margin-bottom: 20px; }
     button { margin: 5px; padding: 8px 12px; }
+    /* 新增導航按鈕樣式 */
+    .nav-buttons { margin-bottom: 20px; }
+    .nav-buttons button { background-color: #007bff; color: white; border: none; padding: 10px 20px; text-align: center; text-decoration: none; display: inline-block; font-size: 16px; margin: 4px 2px; cursor: pointer; border-radius: 5px; }
+    .nav-buttons button:hover { background-color: #0056b3; }
   </style>
 </head>
 <body>
   <div style="max-width: 800px; margin: 20px auto; text-align: center;">
     <h2>👤 <span id="user-name">尚未登入</span></h2>
+    <div class="nav-buttons">
+      <button onclick="window.location.href='index.html'">我的衣櫃</button>
+      <button onclick="window.location.href='wannabe.html'">我想成為</button>
+    </div>
+
     <div>
       <input type="file" id="image-input" accept="image/*" multiple style="display:none;" />
       <button type="button" onclick="openImageSourceSelector()">📷 選擇圖片 (本機 / LINE 拍照/相簿)</button>
@@ -50,7 +58,6 @@
   </div>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <script type="module" src="frontend/js/liff-init.js"></script>
-  <script type="module" src="frontend/js/upload.js"></script>
   <script>function openImageSourceSelector(){document.getElementById('image-input').click();}</script>
 </body>
 </html>

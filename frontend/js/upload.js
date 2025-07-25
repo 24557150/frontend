@@ -1,10 +1,10 @@
 // frontend/js/upload.js
-// 現在從 liff-init.js 導入 backendURL
+// 從 liff-init.js 導入 backendURL
 import { backendURL } from './liff-init.js';
 
 async function uploadImages() {
   console.log("DEBUG: 準備上傳圖片 - uploadImages 函式開始執行");
-
+  
   const input = document.getElementById('image-input');
   const category = document.getElementById('category').value;
   const userId = window.userId; // 從 liff-init.js 獲取 user ID
@@ -15,7 +15,7 @@ async function uploadImages() {
   if (!userId || !category) {
     console.warn("WARN: userId 或 category 缺失，無法上傳。", { userId, category });
     document.getElementById('status').innerText = "⚠️ 請先登入或選擇類別";
-    return;
+    return; 
   }
 
   const files = input.files;
@@ -24,7 +24,7 @@ async function uploadImages() {
   if (!files.length) {
     console.warn("WARN: 未選擇任何檔案，無法上傳。");
     document.getElementById('status').innerText = "未選擇圖片";
-    return;
+    return; 
   }
 
   document.getElementById('status').innerText = "🔄 正在上傳...";
@@ -35,14 +35,14 @@ async function uploadImages() {
     formData.append('category', category);
     formData.append('user_id', userId);
 
-    console.log(`DEBUG: 正在上傳檔案: ${file.name}, 大小: ${file.size} bytes 到 /upload`);
-
+    console.log(`DEBUG: 正在上傳檔案: ${file.name}, 大小: ${file.size} bytes`);
+    
     try {
       const res = await fetch(`${backendURL}/upload`, {
         method: 'POST',
         body: formData,
       });
-
+      
       console.log("DEBUG: 收到後端響應狀態:", res.status);
       const data = await res.json();
       console.log("DEBUG: 後端響應數據:", data);
@@ -62,10 +62,6 @@ async function uploadImages() {
   }
 }
 
-/**
- * 從後端載入衣櫃圖片並顯示。
- * @param {string} category - 要載入的圖片類別 ('all', 'top', 'bottom', 等)。
- */
 export async function loadWardrobe(category = "all") {
   const userId = window.userId;
   console.log("DEBUG: loadWardrobe 函式開始執行，載入類別:", category, "userId:", userId);
@@ -86,10 +82,6 @@ export async function loadWardrobe(category = "all") {
   }
 }
 
-/**
- * 在頁面上顯示衣櫃圖片。
- * @param {Array<Object>} images - 包含圖片路徑、類別和標籤的物件陣列。
- */
 function displayImages(images) {
   console.log("DEBUG: displayImages 函式開始執行，接收到圖片數量:", images.length);
   console.log("DEBUG: displayImages 接收到的圖片數據:", images);
@@ -146,9 +138,6 @@ function displayImages(images) {
   });
 }
 
-/**
- * 刪除選取的衣櫃圖片。
- */
 async function deleteSelected() {
   const userId = window.userId;
   if (!userId) return;

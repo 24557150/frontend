@@ -1,5 +1,5 @@
 // frontend/js/wannabe-upload.js
-// 導入 backendURL，確保與 liff-init.js 中的定義一致
+// 從 liff-init.js 導入 backendURL
 import { backendURL } from './liff-init.js';
 
 /**
@@ -168,14 +168,8 @@ document.addEventListener('DOMContentLoaded', () => {
   console.log("DEBUG: wannabe-upload.js DOMContentLoaded 事件觸發，開始綁定按鈕。");
   document.getElementById('wannabe-upload-button').addEventListener('click', uploadWannabeImages);
   document.getElementById('wannabe-delete-button').addEventListener('click', deleteSelectedWannabe);
-  // 初次載入頁面時，如果已登入，則自動載入圖片
-  if (window.userId) { // 檢查 window.userId 是否已經由 liff-init.js 設定
-      loadWannabeWardrobe();
-  } else {
-      // 如果 liff-init 尚未設定 userId，則等待它設定後再載入
-      // 或者在 liff-init.js 中調用此函數
-  }
   console.log("DEBUG: wannabe-upload.js 按鈕綁定完成。");
 });
 
-// 在 liff-init.js 中調用 loadWannabeWardrobe，確保登入後能自動載入
+// 導出 loadWannabeWardrobe 函數，供 liff-init.js 動態導入
+export { loadWannabeWardrobe };
