@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <title>✨ 我想成為</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="frontend/style.css">
+  <style>
+    /* 確保樣式與現有衣櫃頁面一致，以便視覺統一 */
+    .scroll-container { display: flex; overflow-x: auto; gap: 10px; padding: 10px; border: 1px solid #ccc; border-radius: 8px; margin-bottom: 20px; }
+    .scroll-container img { border-radius: 8px; width: 100px; height: auto; }
+    .caption-text { font-size: 13px; margin-top: 6px; color: #444; text-align: center; max-width: 150px; word-break: break-word; }
+    .image-item { display: flex; flex-direction: column; align-items: center; }
+    .category-section { margin-bottom: 20px; }
+    button { margin: 5px; padding: 8px 12px; }
+    .nav-buttons { margin-bottom: 20px; }
+    .nav-buttons button { background-color: #4CAF50; color: white; border: none; padding: 10px 20px; text-align: center; text-decoration: none; display: inline-block; font-size: 16px; margin: 4px 2px; cursor: pointer; border-radius: 5px; }
+    .nav-buttons button:hover { background-color: #45a049; }
+  </style>
+</head>
+<body>
+  <div style="max-width: 800px; margin: 20px auto; text-align: center;">
+    <h2>👤 <span id="user-name">尚未登入</span></h2>
+    <div class="nav-buttons">
+      <button onclick="window.location.href='index.html'">我的衣櫃</button>
+      <button onclick="window.location.href='wannabe.html'">我想成為</button>
+    </div>
+
+    <h3>✨ 我的「我想成為」圖片</h3>
+    <div>
+      <input type="file" id="wannabe-image-input" accept="image/*" multiple style="display:none;" />
+      <button type="button" onclick="openWannabeImageSourceSelector()">📷 上傳「我想成為」圖片 (本機 / LINE 拍照/相簿)</button>
+    </div>
+    <button id="wannabe-upload-button" type="button" style="margin-left: 10px; margin-top: 10px;">上傳</button>
+    <div id="wannabe-status" style="margin-top: 10px; font-weight: bold;"></div>
+    <hr>
+    <button id="wannabe-delete-button">刪除選取圖片</button>
+
+    <div id="wannabe-image-list" style="margin-top: 20px;">
+      <div class="category-section" id="wannabe-container">
+        </div>
+    </div>
+  </div>
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <script type="module" src="frontend/js/liff-init.js"></script>
+  <script type="module" src="frontend/js/wannabe-upload.js"></script>
+  <script>
+    function openWannabeImageSourceSelector() {
+      document.getElementById('wannabe-image-input').click();
+    }
+  </script>
+</body>
+</html>
