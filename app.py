@@ -4,22 +4,20 @@ import os, uuid, datetime
 from werkzeug.utils import secure_filename
 from google.cloud import storage, firestore
 import json
-from rembg import remove, new_session # 導入 rembg 相關模組
-from io import BytesIO # 用於處理圖片的位元組流
+from rembg import remove, new_session 
+from io import BytesIO 
 
 app = Flask(__name__, static_folder="static", static_url_path="/static")
 CORS(app, supports_credentials=True)
 
-# Cloud Run 的 /tmp 目錄是唯一保證可寫入且適合臨時文件的位置。
-DB_DIR = os.path.join("/tmp", "database") # 資料庫路徑 (雖然現在用 Firestore，但保留以防萬一或用於其他本地檔案)
+DB_DIR = os.path.join("/tmp", "database") 
 UPLOAD_FOLDER = os.path.join("/tmp", "uploads") 
 
-os.makedirs(DB_DIR, exist_ok=True) # 確保資料庫目錄存在
-os.makedirs(UPLOAD_FOLDER, exist_ok=True) # 確保 /tmp/uploads 目錄存在
+os.makedirs(DB_DIR, exist_ok=True) 
+os.makedirs(UPLOAD_FOLDER, exist_ok=True) 
 
-GCS_BUCKET = "cloths"  # 你的 bucket 名稱
+GCS_BUCKET = "cloths"  
 
-# --- GCS Client 初始化邏輯 (保持不變) ---
 _gcs_client_instance = None 
 
 def get_gcs_client():
@@ -45,7 +43,6 @@ def get_gcs_client():
             print("DEBUG: GCS Client initialized with default credentials (no GCP_SECRET_KEY).")
     return _gcs_client_instance
 
-# --- Firestore Client 初始化邏輯 (保持不變) ---
 _firestore_db_instance = None
 
 def get_firestore_db():
@@ -55,33 +52,25 @@ def get_firestore_db():
         print("DEBUG: Firestore Client initialized.")
     return _firestore_db_instance
 
-# --- Rembg 模型會話初始化 ---
 _rembg_session = None
 def get_rembg_session():
     global _rembg_session
     if _rembg_session is None:
-        # 預設使用 U2NET 模型。可以選擇其他模型，例如 'u2netp', 'u2net_human_seg', 'u2net_cloth_seg'
-        # 將模型緩存目錄設定為 /tmp，以避免在只讀文件系統上寫入
         os.environ['XDG_CACHE_HOME'] = '/tmp' 
         _rembg_session = new_session("u2net") 
         print("DEBUG: Rembg session initialized and model loaded.")
     return _rembg_session
 
-# --- GCS 操作函式 (保持不變) ---
 def upload_image_to_gcs(local_path, bucket_name, data_bytes=None):
     client = get_gcs_client()
     bucket = client.bucket(bucket_name)
-    # 使用 uuid 保證檔名唯一，避免覆蓋
-    # 去背後的圖片通常會是 PNG 格式，所以這裡固定副檔名為 .png
     blob_name = f"{uuid.uuid4().hex}_{os.path.splitext(os.path.basename(local_path))[0]}.png"
     blob = bucket.blob(blob_name)
     
     if data_bytes:
-        # 如果提供了位元組數據，直接從位元組上傳
         blob.upload_from_string(data_bytes, content_type='image/png')
         print(f"DEBUG: Data bytes uploaded to GCS as {blob_name}.")
     else:
-        # 否則從本地檔案上傳
         blob.upload_from_filename(local_path)
         print(f"DEBUG: File {local_path} uploaded to GCS as {blob_name}.")
     return blob_name
@@ -98,7 +87,6 @@ def get_signed_url(bucket_name, blob_name, expire_minutes=60):
     print(f"DEBUG: Generated signed URL for {blob_name}.")
     return url
 
-# --- 路由部分 (修改為整合去背功能) ---
 @app.route('/upload', methods=['POST'])
 def upload():
     image = request.files.get('image')
@@ -107,34 +95,31 @@ def upload():
     if not image or not category or not user_id:
         return jsonify({"status": "error", "message": "缺少必要參數"}), 400
 
-    # 讀取原始圖片數據
     input_image_bytes = image.read()
     
-    # 確保臨時儲存目錄存在
     save_dir = os.path.join(UPLOAD_FOLDER, user_id, category)
     os.makedirs(save_dir, exist_ok=True)
 
-    # 臨時保存原始文件 (可選，用於除錯或備份)
-    # filename = secure_filename(image.filename)
-    # filepath = os.path.join(save_dir, filename)
-    # with open(filepath, 'wb') as f:
-    #     f.write(input_image_bytes)
-    # print(f"DEBUG: Original image saved locally to {filepath}")
-
     tags = ""
+    temp_output_filepath = None # 用於儲存去背後的臨時檔案路徑
 
     try:
-        # --- 執行去背操作 ---
         print("DEBUG: Starting background removal...")
         rembg_session = get_rembg_session()
-        # remove 函式直接處理位元組數據，並返回去背後的位元組數據
         output_image_bytes = remove(input_image_bytes, session=rembg_session)
         print("DEBUG: Background removal completed.")
-        # --- 結束去背操作 ---
+
+        # --- 新增: 臨時保存去背後的圖片，以便在日誌中確認 ---
+        # 確保去背後的檔案是 PNG 格式，因為 rembg 輸出通常是 PNG
+        temp_output_filename = f"rembg_{uuid.uuid4().hex}.png"
+        temp_output_filepath = os.path.join(save_dir, temp_output_filename)
+        with open(temp_output_filepath, 'wb') as f:
+            f.write(output_image_bytes)
+        print(f"DEBUG: Rembg output temporarily saved to {temp_output_filepath}")
+        # --- 結束新增 ---
 
         # 將去背後的圖片數據上傳到 GCS
-        # 我們直接傳遞位元組數據，而不是從臨時檔案讀取
-        blob_name = upload_image_to_gcs(image.filename, GCS_BUCKET, data_bytes=output_image_bytes)
+        blob_name = upload_image_to_gcs(temp_output_filepath, GCS_BUCKET, data_bytes=output_image_bytes)
 
         db = get_firestore_db()
         doc_ref = db.collection('wardrobe').document(user_id).collection('items').document()
@@ -152,9 +137,14 @@ def upload():
         print(f"ERROR: Upload processing failed (including rembg): {e}")
         return jsonify({"status": "error", "message": f"上傳處理失敗: {e}"}), 500
     finally:
-        # 由於我們直接處理位元組數據，通常不需要刪除臨時文件，
-        # 但如果之前有臨時保存原始文件，這裡可以清理
-        pass 
+        # 清理臨時文件：上傳到 GCS 後刪除本地文件
+        if temp_output_filepath and os.path.exists(temp_output_filepath):
+            os.remove(temp_output_filepath)
+            print(f"DEBUG: Cleaned up temporary rembg output file: {temp_output_filepath}")
+        # 如果您之前有保存原始圖片到本地，這裡也要清理
+        # if original_filepath and os.path.exists(original_filepath):
+        #     os.remove(original_filepath)
+        #     print(f"DEBUG: Cleaned up original temporary file: {original_filepath}")
 
 @app.route('/wardrobe', methods=['GET'])
 def wardrobe():
@@ -242,11 +232,10 @@ def delete():
 
 @app.route('/')
 def home():
-    return jsonify({"status": "running", "message": "Flask 伺服器運行中"})
+    return jsonify({"status": "running", "message": "Flask 伺服器運行中"})\
 
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 8080))
-    # 在應用程式啟動時預先初始化 GCS 和 Firestore 客戶端，以及 Rembg 模型
     with app.app_context():
         try:
             get_gcs_client()
@@ -261,7 +250,7 @@ if __name__ == '__main__':
             print(f"CRITICAL ERROR: Firestore Client failed to initialize on app startup: {e}")
         
         try:
-            get_rembg_session() # 嘗試在啟動時載入模型
+            get_rembg_session() 
             print("INFO: Rembg model pre-loaded on app startup.")
         except Exception as e:
             print(f"CRITICAL ERROR: Rembg model pre-load failed on app startup: {e}")
