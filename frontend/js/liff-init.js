@@ -37,23 +37,30 @@ async function initializeLiff() {
     console.log("DEBUG: 用戶已登入，userId 設定為:", userId);
 
     // 根據當前頁面路徑動態導入對應的 JavaScript 檔案
-    if (window.location.pathname.includes('wannabe.html')) {
-        // 動態導入 wannabe-upload.js
-        const { loadWannabeWardrobe } = await import('./wannabe-upload.js');
-        loadContentFunction = loadWannabeWardrobe;
-        console.log("DEBUG: 在 wannabe.html 中載入 loadWannabeWardrobe。");
-    } else {
-        // 預設為 index.html，動態導入 upload.js
-        const { loadWardrobe } = await import('./upload.js');
-        loadContentFunction = loadWardrobe;
-        console.log("DEBUG: 在 index.html 中載入 loadWardrobe。");
+    try {
+        if (window.location.pathname.includes('wannabe.html')) {
+            const { loadWannabeWardrobe } = await import('./wannabe-upload.js');
+            loadContentFunction = loadWannabeWardrobe;
+            console.log("DEBUG: 在 wannabe.html 中載入 loadWannabeWardrobe。");
+        } else {
+            const { loadWardrobe } = await import('./upload.js');
+            loadContentFunction = loadWardrobe;
+            console.log("DEBUG: 在 index.html 中載入 loadWardrobe。");
+        }
+    } catch (importError) {
+        console.error("ERROR: 動態導入模組失敗:", importError);
+        if (statusElement) {
+            statusElement.innerText = `❌ 載入頁面功能失敗: ${importError.message}`;
+        }
+        return; // 導入失敗則直接返回，不執行後續的 loadContentFunction()
     }
 
+
     // 確保 loadContentFunction 已經被賦值後再調用
-    if (loadContentFunction) {
+    if (loadContentFunction) { 
       loadContentFunction(); // 調用對應頁面的載入函數
     } else {
-      console.warn("WARN: loadContentFunction 仍未定義，無法載入圖片。"); 
+      console.warn("WARN: loadContentFunction 仍未定義，無法載入圖片。 (此訊息應在導入失敗時出現)"); 
     }
 
   } catch (err) {

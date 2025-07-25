@@ -171,5 +171,3 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('wannabe-delete-button').addEventListener('click', deleteSelectedWannabe);
   console.log("DEBUG: wannabe-upload.js 按鈕綁定完成。");
 });
-
-// 這裡不再需要 export { loadWannabeWardrobe };
