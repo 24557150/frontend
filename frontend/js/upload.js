@@ -2,6 +2,16 @@
 // 從 liff-init.js 導入 backendURL
 import { backendURL } from './liff-init.js'; 
 
+// 新增一個測試函式
+function testUploadClick() {
+  console.log("DEBUG: testUploadClick 函式被觸發！");
+  // 您可以在這裡調用 uploadImages()，或者讓它保持獨立用於測試
+  // uploadImages(); 
+}
+// 將測試函式導出，以便在 HTML 中直接調用
+export { testUploadClick };
+
+
 async function uploadImages() {
   console.log("DEBUG: uploadImages 函式被點擊，準備上傳圖片。"); // 新增日誌
   
@@ -168,18 +178,19 @@ document.addEventListener('DOMContentLoaded', () => {
   console.log("DEBUG: DOMContentLoaded 事件觸發，開始綁定按鈕。");
   const uploadButton = document.getElementById('upload-button');
   if (uploadButton) {
-    uploadButton.addEventListener('click', uploadImages);
-    console.log("DEBUG: '上傳' 按鈕綁定完成。"); // 新增日誌
+    // 這裡的事件監聽器將被 HTML 中的 onclick 覆蓋，但我們仍然保留它以防萬一
+    uploadButton.addEventListener('click', uploadImages); 
+    console.log("DEBUG: '上傳' 按鈕綁定完成。"); 
   } else {
-    console.warn("WARN: 找不到 'upload-button' 元素。"); // 新增日誌
+    console.warn("WARN: 找不到 'upload-button' 元素。"); 
   }
 
   const deleteButton = document.getElementById('delete-button');
   if (deleteButton) {
     deleteButton.addEventListener('click', deleteSelected);
-    console.log("DEBUG: '刪除選取圖片' 按鈕綁定完成。"); // 新增日誌
+    console.log("DEBUG: '刪除選取圖片' 按鈕綁定完成。"); 
   } else {
-    console.warn("WARN: 找不到 'delete-button' 元素。"); // 新增日誌
+    console.warn("WARN: 找不到 'delete-button' 元素。"); 
   }
   
   document.getElementById('all-button').addEventListener('click', () => loadWardrobe("all"));

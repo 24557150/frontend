@@ -36,7 +36,8 @@
       <option value="dress">洋裝</option>
       <option value="shoes">鞋子</option>
     </select>
-    <button id="upload-button" type="button" style="margin-left: 10px;">上傳</button>
+    <!-- 在這裡添加內聯 onclick 測試 -->
+    <button id="upload-button" type="button" style="margin-left: 10px;" onclick="testUploadClick()">上傳</button>
     <div id="status" style="margin-top: 10px; font-weight: bold;">🔄 等待登入...</div>
     <hr>
     <div class="category-buttons" style="margin-bottom: 10px;">
@@ -58,11 +59,6 @@
   </div>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <script type="module" src="frontend/js/liff-init.js"></script>
-  <script>
-    // 確保這個函式存在且正確
-    function openImageSourceSelector(){
-      document.getElementById('image-input').click();
-    }
-  </script>
+  <script>function openImageSourceSelector(){document.getElementById('image-input').click();}</script>
 </body>
 </html>
