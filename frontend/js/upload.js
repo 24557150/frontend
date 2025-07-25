@@ -28,3 +28,4 @@ async function uploadImages() {
     document.getElementById('status').innerText = "未選擇圖片";
     return; 
   }
+}
