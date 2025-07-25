@@ -55,13 +55,11 @@ async function initializeLiff() {
         return; // 導入失敗則直接返回，不執行後續的 loadContentFunction()
     }
 
-
     // 確保 loadContentFunction 已經被賦值後再調用
-    if (loadContentFunction) { 
-      loadContentFunction(); // 調用對應頁面的載入函數
-    } else {
-      console.warn("WARN: loadContentFunction 仍未定義，無法載入圖片。 (此訊息應在導入失敗時出現)"); 
-    }
+    // 這個 if 判斷現在放在 DOMContentLoaded 監聽器內部，以確保元素已經準備好
+    // 實際調用 loadContentFunction() 的部分將在 DOMContentLoaded 監聽器中處理
+    console.log("DEBUG: loadContentFunction 已被賦值，等待 DOMContentLoaded 觸發。");
+
 
   } catch (err) {
     console.error("❌ LIFF 初始化失敗:", err);
@@ -73,4 +71,15 @@ async function initializeLiff() {
   }
 }
 
-document.addEventListener("DOMContentLoaded", initializeLiff);
+// 將 initializeLiff() 的調用放在 DOMContentLoaded 內部，確保所有元素都已載入
+document.addEventListener("DOMContentLoaded", async () => {
+    await initializeLiff(); // 首先初始化 LIFF
+
+    // 在 LIFF 初始化成功且 loadContentFunction 已被賦值後，再調用它
+    if (loadContentFunction) {
+        loadContentFunction(); // 調用對應頁面的載入函數
+        console.log("DEBUG: DOMContentLoaded 觸發，並調用 loadContentFunction。");
+    } else {
+        console.warn("WARN: DOMContentLoaded 後 loadContentFunction 仍未定義，無法載入圖片。");
+    }
+});
