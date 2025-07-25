@@ -52,27 +52,26 @@ def get_firestore_db():
         print("DEBUG: Firestore Client initialized.")
     return _firestore_db_instance
 
-rembg_session = None
-    def get_rembg_session():
-        global _rembg_session
-        if _rembg_session is None:
-            try:
-                print("DEBUG: Setting XDG_CACHE_HOME to /tmp for rembg model cache.")
-                os.environ['XDG_CACHE_HOME'] = '/tmp' 
-                print("DEBUG: Attempting to initialize rembg session with 'u2net' model...")
-                _rembg_session = new_session("u2net") 
-                print("DEBUG: Rembg session initialized and model loaded successfully.")
-            except Exception as e:
-                print(f"CRITICAL ERROR: Rembg model initialization failed: {e}")
-                # 這裡可以選擇重新拋出異常或返回 None，讓調用者處理
-                raise # 重新拋出異常，讓 Cloud Run 日誌捕獲更詳細的錯誤堆棧
-        return _rembg_session
+# 修正語法錯誤：將 rembg_session = None 移到 get_rembg_session 內部或使用 _rembg_session
+# 由於 get_rembg_session 內部已經有 global _rembg_session，這裡不需要額外定義
+_rembg_session = None # 確保這是全域變數的初始聲明
+def get_rembg_session():
+    global _rembg_session
+    if _rembg_session is None:
+        try:
+            print("DEBUG: Setting XDG_CACHE_HOME to /tmp for rembg model cache.")
+            os.environ['XDG_CACHE_HOME'] = '/tmp' 
+            print("DEBUG: Attempting to initialize rembg session with 'u2net' model...")
+            _rembg_session = new_session("u2net") 
+            print("DEBUG: Rembg session initialized and model loaded successfully.")
+        except Exception as e:
+            print(f"CRITICAL ERROR: Rembg model initialization failed: {e}")
+            raise # 重新拋出異常，讓 Cloud Run 日誌捕獲更詳細的錯誤堆棧
+    return _rembg_session
 
 def upload_image_to_gcs(local_path, bucket_name, data_bytes=None):
     client = get_gcs_client()
     bucket = client.bucket(bucket_name)
-    # 確保去背後的檔案是 PNG 格式，因為 rembg 輸出通常是 PNG
-    # 這裡我們只使用 basename，不使用原始副檔名，直接指定為 .png
     blob_name = f"{uuid.uuid4().hex}_{os.path.splitext(os.path.basename(local_path))[0]}.png"
     blob = bucket.blob(blob_name)
     
@@ -118,21 +117,15 @@ def upload():
         output_image_bytes = remove(input_image_bytes, session=rembg_session)
         print("DEBUG: Background removal completed.")
 
-        # --- 新增: 檢查去背後圖片的位元組大小 ---
         print(f"DEBUG: Original image bytes size: {len(input_image_bytes)} bytes")
         print(f"DEBUG: Rembg output image bytes size: {len(output_image_bytes)} bytes")
-        # --- 結束新增 ---
 
-        # --- 新增: 臨時保存去背後的圖片，以便在日誌中確認 ---
         temp_output_filename = f"rembg_{uuid.uuid4().hex}.png"
         temp_output_filepath = os.path.join(save_dir, temp_output_filename)
         with open(temp_output_filepath, 'wb') as f:
             f.write(output_image_bytes)
         print(f"DEBUG: Rembg output temporarily saved to {temp_output_filepath}")
-        # --- 結束新增 ---
 
-        # 將去背後的圖片數據上傳到 GCS
-        # 這裡我們只使用 temp_output_filepath 作為文件名參考，實際數據來自 output_image_bytes
         blob_name = upload_image_to_gcs(temp_output_filepath, GCS_BUCKET, data_bytes=output_image_bytes)
 
         db = get_firestore_db()
