@@ -1,6 +1,6 @@
 // frontend/js/upload.js
 // 從 liff-init.js 導入 backendURL
-import { backendURL } from './liff-init.js';
+import { backendURL } from './liff-init.js'; // 確保這裡導入
 
 async function uploadImages() {
   console.log("DEBUG: 準備上傳圖片 - uploadImages 函式開始執行");
@@ -99,7 +99,7 @@ function displayImages(images) {
   for (const key in categorySections) {
       if (categorySections[key]) {
           categorySections[key].innerHTML = "";
-          console.log(`DEBUG: 清空容器: ${key}-container`);
+          console.log(`DEBUG: 清空容器: ${key}-container`); // 新增日誌
       }
   }
 
@@ -131,9 +131,9 @@ function displayImages(images) {
       wrapper.appendChild(caption);
       wrapper.appendChild(checkbox);
       categorySections[img.category].appendChild(wrapper);
-      console.log(`DEBUG: 添加圖片到 ${img.category} 分類: ${img.path}`);
+      console.log(`DEBUG: 添加圖片到 ${img.category} 分類: ${img.path}`); // 新增日誌
     } else {
-      console.warn(`WARN: 圖片類別 '${img.category}' 無法識別或對應的容器不存在。圖片路徑: ${img.path}`);
+      console.warn(`WARN: 圖片類別 '${img.category}' 無法識別或對應的容器不存在。圖片路徑: ${img.path}`); // 新增日誌
     }
   });
 }
@@ -168,30 +168,14 @@ async function deleteSelected() {
 // 按鈕綁定
 document.addEventListener('DOMContentLoaded', () => {
   console.log("DEBUG: DOMContentLoaded 事件觸發，開始綁定按鈕。");
-  const uploadButton = document.getElementById('upload-button');
-  if (uploadButton) uploadButton.addEventListener('click', uploadImages);
-
-  const deleteButton = document.getElementById('delete-button');
-  if (deleteButton) deleteButton.addEventListener('click', deleteSelected);
-
-  const allButton = document.getElementById('all-button');
-  if (allButton) allButton.addEventListener('click', () => loadWardrobe("all"));
-
-  const topButton = document.getElementById('top-button');
-  if (topButton) topButton.addEventListener('click', () => loadWardrobe("top"));
-
-  const bottomButton = document.getElementById('bottom-button');
-  if (bottomButton) bottomButton.addEventListener('click', () => loadWardrobe("bottom"));
-
-  const skirtButton = document.getElementById('skirt-button');
-  if (skirtButton) skirtButton.addEventListener('click', () => loadWardrobe("skirt"));
-
-  const dressButton = document.getElementById('dress-button');
-  if (dressButton) dressButton.addEventListener('click', () => loadWardrobe("dress"));
-
-  const shoesButton = document.getElementById('shoes-button');
-  if (shoesButton) shoesButton.addEventListener('click', () => loadWardrobe("shoes"));
-
+  document.getElementById('upload-button').addEventListener('click', uploadImages);
+  document.getElementById('delete-button').addEventListener('click', deleteSelected);
+  document.getElementById('all-button').addEventListener('click', () => loadWardrobe("all"));
+  document.getElementById('top-button').addEventListener('click', () => loadWardrobe("top"));
+  document.getElementById('bottom-button').addEventListener('click', () => loadWardrobe("bottom"));
+  document.getElementById('skirt-button').addEventListener('click', () => loadWardrobe("skirt"));
+  document.getElementById('dress-button').addEventListener('click', () => loadWardrobe("dress"));
+  document.getElementById('shoes-button').addEventListener('click', () => loadWardrobe("shoes"));
   console.log("DEBUG: 按鈕綁定完成。");
 });
 
