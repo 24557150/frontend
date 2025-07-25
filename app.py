@@ -64,6 +64,8 @@ def get_rembg_session():
 def upload_image_to_gcs(local_path, bucket_name, data_bytes=None):
     client = get_gcs_client()
     bucket = client.bucket(bucket_name)
+    # 確保去背後的檔案是 PNG 格式，因為 rembg 輸出通常是 PNG
+    # 這裡我們只使用 basename，不使用原始副檔名，直接指定為 .png
     blob_name = f"{uuid.uuid4().hex}_{os.path.splitext(os.path.basename(local_path))[0]}.png"
     blob = bucket.blob(blob_name)
     
@@ -101,7 +103,7 @@ def upload():
     os.makedirs(save_dir, exist_ok=True)
 
     tags = ""
-    temp_output_filepath = None # 用於儲存去背後的臨時檔案路徑
+    temp_output_filepath = None 
 
     try:
         print("DEBUG: Starting background removal...")
@@ -109,8 +111,12 @@ def upload():
         output_image_bytes = remove(input_image_bytes, session=rembg_session)
         print("DEBUG: Background removal completed.")
 
+        # --- 新增: 檢查去背後圖片的位元組大小 ---
+        print(f"DEBUG: Original image bytes size: {len(input_image_bytes)} bytes")
+        print(f"DEBUG: Rembg output image bytes size: {len(output_image_bytes)} bytes")
+        # --- 結束新增 ---
+
         # --- 新增: 臨時保存去背後的圖片，以便在日誌中確認 ---
-        # 確保去背後的檔案是 PNG 格式，因為 rembg 輸出通常是 PNG
         temp_output_filename = f"rembg_{uuid.uuid4().hex}.png"
         temp_output_filepath = os.path.join(save_dir, temp_output_filename)
         with open(temp_output_filepath, 'wb') as f:
@@ -119,6 +125,7 @@ def upload():
         # --- 結束新增 ---
 
         # 將去背後的圖片數據上傳到 GCS
+        # 這裡我們只使用 temp_output_filepath 作為文件名參考，實際數據來自 output_image_bytes
         blob_name = upload_image_to_gcs(temp_output_filepath, GCS_BUCKET, data_bytes=output_image_bytes)
 
         db = get_firestore_db()
@@ -137,14 +144,10 @@ def upload():
         print(f"ERROR: Upload processing failed (including rembg): {e}")
         return jsonify({"status": "error", "message": f"上傳處理失敗: {e}"}), 500
     finally:
-        # 清理臨時文件：上傳到 GCS 後刪除本地文件
         if temp_output_filepath and os.path.exists(temp_output_filepath):
             os.remove(temp_output_filepath)
             print(f"DEBUG: Cleaned up temporary rembg output file: {temp_output_filepath}")
-        # 如果您之前有保存原始圖片到本地，這裡也要清理
-        # if original_filepath and os.path.exists(original_filepath):
-        #     os.remove(original_filepath)
-        #     print(f"DEBUG: Cleaned up original temporary file: {original_filepath}")
+        pass 
 
 @app.route('/wardrobe', methods=['GET'])
 def wardrobe():
