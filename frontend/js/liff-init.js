@@ -1,14 +1,12 @@
-    // frontend/js/liff-init.js
-    // 統一匯出後端 URL，供所有模組使用
-    export const backendURL = 'https://liff-test-941374905030.asia-east1.run.app';
+// frontend/js/liff-init.js
+// 統一匯出後端 URL，供所有模組使用
+export const backendURL = 'https://liff-test-941374905030.asia-east1.run.app';
 
-    const liffId = "2007733246-nAexA2b9"; // 你現有的 LIFF ID
+// 定義 LIFF ID
+const liffId = "2007733246-nAexA2b9";
 
-    // 用於儲存根據頁面動態載入的功能模組中的載入函數
-    let loadContentFunction; 
-
-    // frontend/js/liff-init.js
-// ... (其他部分保持不變)
+// 用於儲存根據頁面動態載入的功能模組中的載入函數
+let loadContentFunction; 
 
 async function initializeLiff() {
   try {
@@ -17,6 +15,7 @@ async function initializeLiff() {
 
     if (!liff.isLoggedIn()) {
       console.log("DEBUG: 未登入，導向登入頁面。");
+      // 使用固定 GitHub Pages 網址，避免 iOS 無法登入
       liff.login({ redirectUri: "https://24557150.github.io/liff-test/" });
       return;
     }
@@ -24,34 +23,40 @@ async function initializeLiff() {
     const profile = await liff.getProfile();
     const userId = profile.userId;
 
-    window.userId = userId;
+    // 將 userId 賦值給 window.userId，讓其他模組可以存取
+    window.userId = userId; 
     localStorage.setItem('user_id', userId);
 
+    // 更新用戶名顯示，這在兩個頁面都通用
     const userNameElement = document.getElementById('user-name');
     if (userNameElement) {
       userNameElement.innerText = profile.displayName;
     }
-    const statusElement = document.getElementById('status') || document.getElementById('wannabe-status'); // 兼容兩個頁面
+    // 根據頁面更新狀態訊息的元素 ID
+    const statusElement = document.getElementById('status') || document.getElementById('wannabe-status'); 
     if (statusElement) {
-        statusElement.innerText = `✅ 已登入：${profile.displayName}`;
+      statusElement.innerText = `✅ 已登入：${profile.displayName}`; 
     }
     console.log("DEBUG: 用戶已登入，userId 設定為:", userId);
 
     // 根據當前頁面路徑動態導入對應的 JavaScript 檔案
     if (window.location.pathname.includes('wannabe.html')) {
-        const { loadWannabeWardrobe } = await import('./wannabe-upload.js');
-        loadContentFunction = loadWannabeWardrobe;
-        console.log("DEBUG: 在 wannabe.html 中載入 loadWannabeWardrobe。");
+      // 如果是 wannabe.html 頁面，則從 wannabe-upload.js 導入 loadWannabeWardrobe
+      const { loadWannabeWardrobe } = await import('./wannabe-upload.js');
+      loadContentFunction = loadWannabeWardrobe;
+      console.log("DEBUG: 在 wannabe.html 中載入 loadWannabeWardrobe。");
     } else {
-        const { loadWardrobe } = await import('./upload.js');
-        loadContentFunction = loadWardrobe;
-        console.log("DEBUG: 在 index.html 中載入 loadWardrobe。");
+      // 否則（假設是 index.html 或其他預設頁面），從 upload.js 導入 loadWardrobe
+      const { loadWardrobe } = await import('./upload.js');
+      loadContentFunction = loadWardrobe;
+      console.log("DEBUG: 在 index.html 中載入 loadWardrobe。");
     }
 
+    // 確保 loadContentFunction 已經被賦值後再調用
     if (loadContentFunction) {
-      loadContentFunction();
+      loadContentFunction(); // 調用對應頁面的載入函數
     } else {
-      console.warn("WARN: loadContentFunction 仍未定義，無法載入圖片。");
+      console.warn("WARN: loadContentFunction 仍未定義，無法載入圖片。"); //
     }
 
   } catch (err) {
