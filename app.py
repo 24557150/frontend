@@ -52,14 +52,21 @@ def get_firestore_db():
         print("DEBUG: Firestore Client initialized.")
     return _firestore_db_instance
 
-_rembg_session = None
-def get_rembg_session():
-    global _rembg_session
-    if _rembg_session is None:
-        os.environ['XDG_CACHE_HOME'] = '/tmp' 
-        _rembg_session = new_session("u2net") 
-        print("DEBUG: Rembg session initialized and model loaded.")
-    return _rembg_session
+rembg_session = None
+    def get_rembg_session():
+        global _rembg_session
+        if _rembg_session is None:
+            try:
+                print("DEBUG: Setting XDG_CACHE_HOME to /tmp for rembg model cache.")
+                os.environ['XDG_CACHE_HOME'] = '/tmp' 
+                print("DEBUG: Attempting to initialize rembg session with 'u2net' model...")
+                _rembg_session = new_session("u2net") 
+                print("DEBUG: Rembg session initialized and model loaded successfully.")
+            except Exception as e:
+                print(f"CRITICAL ERROR: Rembg model initialization failed: {e}")
+                # 這裡可以選擇重新拋出異常或返回 None，讓調用者處理
+                raise # 重新拋出異常，讓 Cloud Run 日誌捕獲更詳細的錯誤堆棧
+        return _rembg_session
 
 def upload_image_to_gcs(local_path, bucket_name, data_bytes=None):
     client = get_gcs_client()
