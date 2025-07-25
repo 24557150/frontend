@@ -36,7 +36,6 @@
       <option value="dress">洋裝</option>
       <option value="shoes">鞋子</option>
     </select>
-    <!-- 移除內聯 onclick 屬性 -->
     <button id="upload-button" type="button" style="margin-left: 10px;">上傳</button>
     <div id="status" style="margin-top: 10px; font-weight: bold;">🔄 等待登入...</div>
     <hr>
@@ -59,6 +58,11 @@
   </div>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <script type="module" src="frontend/js/liff-init.js"></script>
-  <script>function openImageSourceSelector(){document.getElementById('image-input').click();}</script>
+  <script>
+    function openImageSourceSelector(){
+      console.log("DEBUG: openImageSourceSelector 函式被觸發，嘗試點擊 image-input。"); // 新增日誌
+      document.getElementById('image-input').click();
+    }
+  </script>
 </body>
 </html>
