@@ -4,27 +4,27 @@ import os, uuid, datetime
 from werkzeug.utils import secure_filename
 from google.cloud import storage, firestore
 import json
-from rembg import remove, new_session 
-from io import BytesIO 
+from rembg import remove, new_session
+from io import BytesIO
 
 app = Flask(__name__, static_folder="static", static_url_path="/static")
 CORS(app, supports_credentials=True)
 
-DB_DIR = os.path.join("/tmp", "database") 
-UPLOAD_FOLDER = os.path.join("/tmp", "uploads") 
+DB_DIR = os.path.join("/tmp", "database")
+UPLOAD_FOLDER = os.path.join("/tmp", "uploads")
 
-os.makedirs(DB_DIR, exist_ok=True) 
-os.makedirs(UPLOAD_FOLDER, exist_ok=True) 
+os.makedirs(DB_DIR, exist_ok=True)
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
-GCS_BUCKET = "cloths"  
+GCS_BUCKET = "cloths"
 
-_gcs_client_instance = None 
+_gcs_client_instance = None
 
 def get_gcs_client():
     global _gcs_client_instance
     if _gcs_client_instance is None:
         gcs_credentials_json = os.environ.get("GCP_SECRET_KEY")
-        
+
         if gcs_credentials_json:
             try:
                 credentials_info = json.loads(gcs_credentials_json)
@@ -52,19 +52,19 @@ def get_firestore_db():
         print("DEBUG: Firestore Client initialized.")
     return _firestore_db_instance
 
-_rembg_session = None 
+_rembg_session = None
 def get_rembg_session():
     global _rembg_session
     if _rembg_session is None:
         try:
             print("DEBUG: Setting XDG_CACHE_HOME to /tmp for rembg model cache.")
-            os.environ['XDG_CACHE_HOME'] = '/tmp' 
+            os.environ['XDG_CACHE_HOME'] = '/tmp'
             print("DEBUG: Attempting to initialize rembg session with 'u2net' model...")
-            _rembg_session = new_session("u2net") 
+            _rembg_session = new_session("u2net")
             print("DEBUG: Rembg session initialized and model loaded successfully.")
         except Exception as e:
             print(f"CRITICAL ERROR: Rembg model initialization failed: {e}")
-            raise # 重新拋出異常，讓 Cloud Run 日誌捕獲更詳細的錯誤堆棧
+            raise # Re-raise the exception to let Cloud Run logs capture more detailed error stack
     return _rembg_session
 
 def upload_image_to_gcs(local_path, bucket_name, data_bytes=None):
@@ -72,7 +72,7 @@ def upload_image_to_gcs(local_path, bucket_name, data_bytes=None):
     bucket = client.bucket(bucket_name)
     blob_name = f"{uuid.uuid4().hex}_{os.path.splitext(os.path.basename(local_path))[0]}.png"
     blob = bucket.blob(blob_name)
-    
+
     if data_bytes:
         blob.upload_from_string(data_bytes, content_type='image/png')
         print(f"DEBUG: Data bytes uploaded to GCS as {blob_name}.")
@@ -102,12 +102,12 @@ def upload():
         return jsonify({"status": "error", "message": "缺少必要參數"}), 400
 
     input_image_bytes = image.read()
-    
+
     save_dir = os.path.join(UPLOAD_FOLDER, user_id, category)
     os.makedirs(save_dir, exist_ok=True)
 
     tags = ""
-    temp_output_filepath = None 
+    temp_output_filepath = None
 
     try:
         print("DEBUG: Starting background removal...")
@@ -145,7 +145,7 @@ def upload():
         if temp_output_filepath and os.path.exists(temp_output_filepath):
             os.remove(temp_output_filepath)
             print(f"DEBUG: Cleaned up temporary rembg output file: {temp_output_filepath}")
-        pass 
+        pass
 
 @app.route('/wardrobe', methods=['GET'])
 def wardrobe():
@@ -156,16 +156,16 @@ def wardrobe():
 
     images = []
     try:
-        db = get_firestore_db() 
+        db = get_firestore_db()
         query = db.collection('wardrobe').document(user_id).collection('items')
-        
+
         if category and category != "all":
             query = query.where('category', '==', category)
-        
+
         query = query.order_by('timestamp', direction=firestore.Query.DESCENDING)
-        
+
         docs = query.stream()
-        
+
         for doc in docs:
             item_data = doc.to_dict()
             blob_name = item_data.get('filename')
@@ -194,40 +194,41 @@ def delete():
 
     deleted_count = 0
     db = get_firestore_db()
-    
+
     for url in paths:
+        # Extract filename from signed URL
         if "storage.googleapis.com" in url:
             filename = url.split("/")[-1].split("?")[0]
         elif "X-Goog-Algorithm" in url:
             filename = url.split("/")[-1].split("?")[0]
         else:
-            filename = url
+            filename = url # Fallback if URL format changes
 
         try:
-            # --- GCS: 刪除實際的圖片檔案 ---
+            # --- GCS: Delete the actual image file ---
             client = get_gcs_client()
             bucket = client.bucket(GCS_BUCKET)
             blob = bucket.blob(filename)
             blob.delete()
             print(f"DEBUG: GCS blob {filename} deleted.")
-            
-            # --- Firestore: 找到並刪除 Firestore 中的記錄 ---
+
+            # --- Firestore: Find and delete the record in Firestore ---
             query = db.collection('wardrobe').document(user_id).collection('items').where('filename', '==', filename)
             docs = query.stream()
-            
+
             found_docs = 0
             for doc in docs:
                 doc.reference.delete()
                 print(f"DEBUG: Firestore document {doc.id} deleted for filename {filename}.")
                 found_docs += 1
-            
+
             if found_docs > 0:
                 deleted_count += 1
             else:
                 print(f"WARN: No Firestore document found for filename {filename} under user {user_id}.")
 
         except Exception as e:
-            print(f"[WARN] 刪除失敗 (GCS 或 Firestore): {e}")
+            print(f"[WARN] Failed to delete (GCS or Firestore): {e}")
 
     return jsonify({"status": "ok", "deleted": deleted_count})
 
@@ -334,7 +335,7 @@ def delete_wannabe():
         elif "X-Goog-Algorithm" in url:
             filename = url.split("/")[-1].split("?")[0]
         else:
-            filename = url
+            filename = url # Fallback if URL format changes
 
         try:
             # --- GCS: Delete the actual image file ---
@@ -385,7 +386,7 @@ if __name__ == '__main__':
             print(f"CRITICAL ERROR: Firestore Client failed to initialize on app startup: {e}")
 
         try:
-            get_rembg_session() 
+            get_rembg_session()
             print("INFO: Rembg model pre-loaded on app startup.")
         except Exception as e:
             print(f"CRITICAL ERROR: Rembg model pre-load failed on app startup: {e}")
