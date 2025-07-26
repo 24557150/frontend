@@ -446,8 +446,8 @@ def main():
     
     parser.add_argument(
         '--base-url',
-        default='https://api.runninghub.ai', # 調整預設 API URL
-        help='API 基礎 URL (默認: https://api.runninghub.ai)'
+        default='https://www.runninghub.ai', # 調整預設 API URL
+        help='API 基礎 URL (默認: https://www.runninghub.ai)'
     )
     
     parser.add_argument(
