@@ -88,6 +88,8 @@ def get_rembg_session():
 def upload_image_to_gcs(local_path, bucket_name, data_bytes=None):
     client = get_gcs_client()
     bucket = client.bucket(bucket_name)
+    # 確保去背後的檔案是 PNG 格式，因為 rembg 輸出通常是 PNG
+    # 這裡我們只使用 basename，不使用原始副檔名，直接指定為 .png
     blob_name = f"{uuid.uuid4().hex}_{os.path.splitext(os.path.basename(local_path))[0]}.png"
     blob = bucket.blob(blob_name)
     
@@ -402,7 +404,10 @@ def pose_correction():
 
     # 為了姿勢矯正模型，將圖片暫存到 /tmp
     save_path = f"/tmp/{uuid.uuid4().hex}_{secure_filename(image.filename)}"
-    image.save(save_path)
+    # 將圖片內容讀取到 BytesIO，然後保存到暫存路徑
+    image_bytes = image.read()
+    with open(save_path, 'wb') as f:
+        f.write(image_bytes)
     print(f"DEBUG: Original image saved to {save_path} for pose correction.")
 
     try:
@@ -410,11 +415,18 @@ def pose_correction():
         output_dir = "/tmp/pose_results"
         os.makedirs(output_dir, exist_ok=True)
         print(f"DEBUG: Calling RunningHubImageProcessor with input: {save_path}, output_dir: {output_dir}")
-        success = processor.process_image(save_path, prompt_text="姿勢矯正", output_dir=output_dir)
+        
+        # 調用 RunningHubImageProcessor 的 process_image 方法
+        success = processor.process_image(
+            image_path=save_path, 
+            prompt_text="姿勢矯正", 
+            output_dir=output_dir,
+            max_wait_time=60 # 給予足夠的超時時間
+        )
         
         if success:
             from pathlib import Path
-            # 找到最新生成的圖片 (RunningHub 可能會生成多個，取最新的)
+            # RunningHubImageProcessor 應該會將結果保存為 PNG
             files = sorted(Path(output_dir).glob("*.png"), key=os.path.getmtime)
             if files:
                 result_path = str(files[-1]) # 取最新的檔案
