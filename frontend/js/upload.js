@@ -2,10 +2,11 @@
 // 從 liff-init.js 導入 backendURL
 import { backendURL } from './liff-init.js'; 
 
-async function uploadImages() {
-  console.log("DEBUG: uploadImages 函式開始執行。"); // 新增日誌
+// uploadImages 函式現在將作為 input 的 change 事件處理器
+async function uploadImages(event) {
+  console.log("DEBUG: uploadImages 函式被觸發 (來自 input change 事件)。"); // 新增日誌
   
-  const input = document.getElementById('image-input');
+  const input = event.target; // 事件目標就是 input 元素
   const category = document.getElementById('category').value;
   const userId = window.userId; 
 
@@ -15,6 +16,8 @@ async function uploadImages() {
   if (!userId || !category) {
     console.warn("WARN: userId 或 category 缺失，無法上傳。", { userId, category });
     document.getElementById('status').innerText = "⚠️ 請先登入或選擇類別";
+    // 清空文件選擇，避免重複提示
+    input.value = ''; 
     return; 
   }
 
@@ -61,6 +64,8 @@ async function uploadImages() {
       document.getElementById('status').innerText = `❌ 上傳失敗: ${err.message}`;
     }
   }
+  // 清空文件選擇，以便下次選擇相同文件也能觸發 change 事件
+  input.value = ''; 
 }
 
 // 這裡已經有 export 關鍵字，無需在檔案末尾重複導出
@@ -167,13 +172,24 @@ async function deleteSelected() {
 // 按鈕綁定
 document.addEventListener('DOMContentLoaded', () => {
   console.log("DEBUG: DOMContentLoaded 事件觸發，開始綁定按鈕。");
+  
+  // 讓上傳按鈕點擊時觸發文件輸入框的點擊事件
   const uploadButton = document.getElementById('upload-button');
-  console.log("DEBUG: 獲取到的 uploadButton 元素:", uploadButton); // 新增這行日誌
-  if (uploadButton) {
-    uploadButton.addEventListener('click', uploadImages); 
-    console.log("DEBUG: '上傳' 按鈕綁定完成。"); 
+  const imageInput = document.getElementById('image-input');
+
+  console.log("DEBUG: 獲取到的 uploadButton 元素:", uploadButton);
+  console.log("DEBUG: 獲取到的 imageInput 元素:", imageInput);
+
+  if (uploadButton && imageInput) {
+    uploadButton.addEventListener('click', () => {
+      console.log("DEBUG: '上傳' 按鈕被點擊，觸發 image-input 點擊。");
+      imageInput.click(); // 點擊上傳按鈕時，觸發文件選擇框
+    });
+    // 當文件選擇框的內容改變時，觸發 uploadImages 函式
+    imageInput.addEventListener('change', uploadImages); 
+    console.log("DEBUG: '上傳' 按鈕和 'image-input' 綁定完成。"); 
   } else {
-    console.warn("WARN: 找不到 'upload-button' 元素。"); 
+    console.warn("WARN: 找不到 'upload-button' 或 'image-input' 元素。"); 
   }
 
   const deleteButton = document.getElementById('delete-button');

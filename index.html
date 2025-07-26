@@ -26,8 +26,9 @@
     </div>
 
     <div>
+      <!-- 隱藏的檔案輸入框，現在由上傳按鈕直接觸發 -->
       <input type="file" id="image-input" accept="image/*" multiple style="display:none;" />
-      <button type="button" onclick="openImageSourceSelector()">📷 選擇圖片 (本機 / LINE 拍照/相簿)</button>
+      <!-- 移除 "選擇圖片" 按鈕 -->
     </div>
     <select id="category" style="margin-top: 10px;">
       <option value="top">上衣</option>
@@ -36,6 +37,7 @@
       <option value="dress">洋裝</option>
       <option value="shoes">鞋子</option>
     </select>
+    <!-- "上傳" 按鈕現在將觸發文件選擇和上傳邏輯 -->
     <button id="upload-button" type="button" style="margin-left: 10px;">上傳</button>
     <div id="status" style="margin-top: 10px; font-weight: bold;">🔄 等待登入...</div>
     <hr>
@@ -58,11 +60,6 @@
   </div>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <script type="module" src="frontend/js/liff-init.js"></script>
-  <script>
-    function openImageSourceSelector(){
-      console.log("DEBUG: openImageSourceSelector 函式被觸發，嘗試點擊 image-input。"); // 新增日誌
-      document.getElementById('image-input').click();
-    }
-  </script>
+  <!-- 移除 openImageSourceSelector 函式 -->
 </body>
 </html>
