@@ -1,34 +1,32 @@
 // frontend/js/upload.js
 // 從 liff-init.js 導入 backendURL
-import { backendURL } from './liff-init.js'; 
+import { backendURL } from './liff-init.js';
 
-// uploadImages 函式現在將作為 input 的 change 事件處理器
+// 處理圖片上傳的主函式
 async function uploadImages(event) {
-  console.log("DEBUG: uploadImages 函式被觸發 (來自 input change 事件)。"); // 新增日誌
-  
-  const input = event.target; // 事件目標就是 input 元素
-  const category = document.getElementById('category').value;
-  const userId = window.userId; 
+  console.log("DEBUG: uploadImages 被觸發 (來自 input change 事件)");
 
-  console.log("DEBUG: 獲取到的 userId (uploadImages):", userId);
-  console.log("DEBUG: 獲取到的 category (uploadImages):", category);
+  const input = event.target;
+  const category = document.getElementById('category').value;
+  const userId = window.userId;
+
+  console.log("DEBUG: 當前 userId:", userId);
+  console.log("DEBUG: 當前 category:", category);
 
   if (!userId || !category) {
-    console.warn("WARN: userId 或 category 缺失，無法上傳。", { userId, category });
+    console.warn("WARN: userId 或 category 缺失，無法上傳", { userId, category });
     document.getElementById('status').innerText = "⚠️ 請先登入或選擇類別";
-    // 清空文件選擇，避免重複提示
-    input.value = ''; 
-    return; 
+    input.value = '';
+    return;
   }
 
   const files = input.files;
-  console.log("DEBUG: 獲取到的檔案物件 (input.files):", files); // 新增日誌
-  console.log("DEBUG: 選擇的檔案數量 (files.length):", files.length); // 新增日誌
+  console.log("DEBUG: 選擇的檔案數量:", files.length);
 
   if (!files.length) {
-    console.warn("WARN: 未選擇任何檔案，無法上傳。");
+    console.warn("WARN: 未選擇任何檔案");
     document.getElementById('status').innerText = "未選擇圖片";
-    return; 
+    return;
   }
 
   document.getElementById('status').innerText = "🔄 正在上傳...";
@@ -39,59 +37,60 @@ async function uploadImages(event) {
     formData.append('category', category);
     formData.append('user_id', userId);
 
-    console.log(`DEBUG: 正在上傳檔案: ${file.name}, 大小: ${file.size} bytes`);
-    
+    console.log(`DEBUG: 開始上傳檔案 ${file.name} (${file.size} bytes)`);
+
     try {
       const res = await fetch(`${backendURL}/upload`, {
         method: 'POST',
         body: formData,
       });
-      
-      console.log("DEBUG: 收到後端響應狀態:", res.status);
+
+      console.log("DEBUG: 後端回應狀態:", res.status);
       const data = await res.json();
-      console.log("DEBUG: 後端響應數據:", data);
+      console.log("DEBUG: 後端回應資料:", data);
 
       if (data.status === 'ok') {
-        console.log("INFO: 上傳成功，正在重新載入衣櫃。");
+        console.log("INFO: 上傳成功，重新載入衣櫃");
         document.getElementById('status').innerText = "✅ 上傳成功！";
-        loadWardrobe(); 
+        loadWardrobe();
       } else {
-        console.error("ERROR: 後端返回錯誤狀態:", data.message);
+        console.error("ERROR: 上傳失敗 (後端回傳錯誤):", data.message);
         document.getElementById('status').innerText = `❌ 上傳失敗: ${data.message}`;
       }
     } catch (err) {
-      console.error('❌ 上傳錯誤 (Fetch 或 JSON 解析失敗):', err);
+      console.error("❌ 上傳過程錯誤 (Fetch 或 JSON 解析失敗):", err);
       document.getElementById('status').innerText = `❌ 上傳失敗: ${err.message}`;
     }
   }
-  // 清空文件選擇，以便下次選擇相同文件也能觸發 change 事件
-  input.value = ''; 
+
+  input.value = ''; // 清空選擇，以便下次能重複選同檔案
 }
 
-// 這裡已經有 export 關鍵字，無需在檔案末尾重複導出
-export async function loadWardrobe(category = "all") { 
+// 載入衣櫃內容
+export async function loadWardrobe(category = "all") {
   const userId = window.userId;
-  console.log("DEBUG: loadWardrobe 函式開始執行，載入類別:", category, "userId:", userId); 
+  console.log("DEBUG: 執行 loadWardrobe，類別:", category, "userId:", userId);
+
   if (!userId) {
-    console.warn("WARN: 載入衣櫃時 userId 缺失。");
+    console.warn("WARN: userId 缺失，無法載入衣櫃");
     return;
   }
 
   try {
     const url = `${backendURL}/wardrobe?user_id=${userId}&category=${category}`;
-    console.log("DEBUG: 正在從後端獲取衣櫃數據:", url); 
+    console.log("DEBUG: 從後端獲取衣櫃資料:", url);
     const res = await fetch(url);
     const data = await res.json();
-    console.log("DEBUG: 後端衣櫃數據載入成功:", data); 
+    console.log("DEBUG: 後端回應衣櫃資料:", data);
     displayImages(data.images);
   } catch (err) {
     console.error("❌ 載入衣櫃失敗", err);
   }
 }
 
+// 顯示圖片
 function displayImages(images) {
-  console.log("DEBUG: displayImages 函式開始執行，接收到圖片數量:", images.length);
-  console.log("DEBUG: displayImages 接收到的圖片數據:", images);
+  console.log("DEBUG: displayImages 開始，圖片數量:", images.length);
 
   const categorySections = {
     "top": document.getElementById("top-container"),
@@ -101,11 +100,12 @@ function displayImages(images) {
     "shoes": document.getElementById("shoes-container")
   };
 
+  // 清空各分類容器
   for (const key in categorySections) {
-      if (categorySections[key]) {
-          categorySections[key].innerHTML = "";
-          console.log(`DEBUG: 清空容器: ${key}-container`); 
-      }
+    if (categorySections[key]) {
+      categorySections[key].innerHTML = "";
+      console.log(`DEBUG: 已清空 ${key}-container`);
+    }
   }
 
   images.forEach(img => {
@@ -135,16 +135,19 @@ function displayImages(images) {
       wrapper.appendChild(caption);
       wrapper.appendChild(checkbox);
       categorySections[img.category].appendChild(wrapper);
-      console.log(`DEBUG: 添加圖片到 ${img.category} 分類: ${img.path}`); 
+
+      console.log(`DEBUG: 已添加圖片 (${img.category}): ${img.path}`);
     } else {
-      console.warn(`WARN: 圖片類別 '${img.category}' 無法識別或對應的容器不存在。圖片路徑: ${img.path}`); 
+      console.warn(`WARN: 找不到分類 ${img.category}，圖片路徑: ${img.path}`);
     }
   });
 }
 
+// 刪除已選圖片
 async function deleteSelected() {
   const userId = window.userId;
   if (!userId) return;
+
   const checkboxes = document.querySelectorAll("#image-list input[type=checkbox]:checked");
   if (!checkboxes.length) return;
 
@@ -164,47 +167,34 @@ async function deleteSelected() {
       document.getElementById('status').innerText = `❌ 刪除失敗: ${data.message}`;
     }
   } catch (err) {
-    console.error("❌ 刪除錯誤", err);
+    console.error("❌ 刪除過程錯誤", err);
     document.getElementById('status').innerText = `❌ 刪除失敗: ${err.message}`;
   }
 }
 
-// 按鈕綁定
-document.addEventListener('DOMContentLoaded', () => {
-  console.log("DEBUG: DOMContentLoaded 事件觸發，開始綁定按鈕。");
-  
-  // 讓上傳按鈕點擊時觸發文件輸入框的點擊事件
+// 新增：頁面初始化函式 (給 liff-init.js 調用)
+export function initUploadFeatures() {
+  console.log("DEBUG: 初始化 upload 頁面功能");
   const uploadButton = document.getElementById('upload-button');
   const imageInput = document.getElementById('image-input');
 
-  console.log("DEBUG: 獲取到的 uploadButton 元素:", uploadButton); // 新增這行日誌
-  console.log("DEBUG: 獲取到的 imageInput 元素:", imageInput); // 新增這行日誌
+  console.log("DEBUG: 綁定前取得元素 uploadButton:", uploadButton);
+  console.log("DEBUG: 綁定前取得元素 imageInput:", imageInput);
 
   if (uploadButton && imageInput) {
     uploadButton.addEventListener('click', () => {
-      console.log("DEBUG: '上傳' 按鈕被點擊，觸發 image-input 點擊。");
-      imageInput.click(); // 點擊上傳按鈕時，觸發文件選擇框
+      console.log("DEBUG: 上傳按鈕被點擊，觸發選擇框");
+      imageInput.click();
     });
-    // 當文件選擇框的內容改變時，觸發 uploadImages 函式
-    imageInput.addEventListener('change', uploadImages); 
-    console.log("DEBUG: '上傳' 按鈕和 'image-input' 綁定完成。"); 
+    imageInput.addEventListener('change', uploadImages);
+    console.log("DEBUG: 已完成上傳按鈕與檔案輸入框綁定");
   } else {
-    console.warn("WARN: 找不到 'upload-button' 或 'image-input' 元素。"); 
+    console.warn("WARN: 找不到 uploadButton 或 imageInput，無法綁定事件");
   }
 
   const deleteButton = document.getElementById('delete-button');
   if (deleteButton) {
     deleteButton.addEventListener('click', deleteSelected);
-    console.log("DEBUG: '刪除選取圖片' 按鈕綁定完成。"); 
-  } else {
-    console.warn("WARN: 找不到 'delete-button' 元素。"); 
+    console.log("DEBUG: 已綁定刪除按鈕");
   }
-  
-  document.getElementById('all-button').addEventListener('click', () => loadWardrobe("all"));
-  document.getElementById('top-button').addEventListener('click', () => loadWardrobe("top"));
-  document.getElementById('bottom-button').addEventListener('click', () => loadWardrobe("bottom"));
-  document.getElementById('skirt-button').addEventListener('click', () => loadWardrobe("skirt"));
-  document.getElementById('dress-button').addEventListener('click', () => loadWardrobe("dress"));
-  document.getElementById('shoes-button').addEventListener('click', () => loadWardrobe("shoes"));
-  console.log("DEBUG: 分類按鈕綁定完成。");
-});
+}
