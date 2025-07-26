@@ -1,35 +1,31 @@
 // frontend/js/upload.js
-// 從 liff-init.js 導入 backendURL
 import { backendURL } from './liff-init.js';
 
-// 處理圖片上傳的主函式
+// 支援多張圖片上傳，避免每張上傳後立即刷新
 async function uploadImages(event) {
-  console.log("DEBUG: uploadImages 被觸發 (來自 input change 事件)");
+  console.log("DEBUG: uploadImages 被觸發 (支援多檔案)");
 
   const input = event.target;
   const category = document.getElementById('category').value;
   const userId = window.userId;
 
-  console.log("DEBUG: 當前 userId:", userId);
-  console.log("DEBUG: 當前 category:", category);
-
   if (!userId || !category) {
-    console.warn("WARN: userId 或 category 缺失，無法上傳", { userId, category });
+    console.warn("WARN: userId 或 category 缺失");
     document.getElementById('status').innerText = "⚠️ 請先登入或選擇類別";
     input.value = '';
     return;
   }
 
   const files = input.files;
-  console.log("DEBUG: 選擇的檔案數量:", files.length);
-
   if (!files.length) {
-    console.warn("WARN: 未選擇任何檔案");
+    console.warn("WARN: 沒有選擇檔案");
     document.getElementById('status').innerText = "未選擇圖片";
     return;
   }
 
-  document.getElementById('status').innerText = "🔄 正在上傳...";
+  document.getElementById('status').innerText = `🔄 正在上傳 ${files.length} 張圖片...`;
+
+  let successCount = 0, failCount = 0;
 
   for (const file of files) {
     const formData = new FormData();
@@ -37,51 +33,45 @@ async function uploadImages(event) {
     formData.append('category', category);
     formData.append('user_id', userId);
 
-    console.log(`DEBUG: 開始上傳檔案 ${file.name} (${file.size} bytes)`);
+    console.log(`DEBUG: 準備上傳 ${file.name} (${file.size} bytes)`);
 
     try {
-      const res = await fetch(`${backendURL}/upload`, {
-        method: 'POST',
-        body: formData,
-      });
-
-      console.log("DEBUG: 後端回應狀態:", res.status);
+      const res = await fetch(`${backendURL}/upload`, { method: 'POST', body: formData });
       const data = await res.json();
-      console.log("DEBUG: 後端回應資料:", data);
 
       if (data.status === 'ok') {
-        console.log("INFO: 上傳成功，重新載入衣櫃");
-        document.getElementById('status').innerText = "✅ 上傳成功！";
-        loadWardrobe();
+        successCount++;
+        console.log(`INFO: ${file.name} 上傳成功`);
       } else {
-        console.error("ERROR: 上傳失敗 (後端回傳錯誤):", data.message);
-        document.getElementById('status').innerText = `❌ 上傳失敗: ${data.message}`;
+        failCount++;
+        console.error(`ERROR: ${file.name} 上傳失敗:`, data.message);
       }
     } catch (err) {
-      console.error("❌ 上傳過程錯誤 (Fetch 或 JSON 解析失敗):", err);
-      document.getElementById('status').innerText = `❌ 上傳失敗: ${err.message}`;
+      failCount++;
+      console.error(`❌ ${file.name} 上傳錯誤:`, err);
     }
   }
 
-  input.value = ''; // 清空選擇，以便下次能重複選同檔案
+  document.getElementById('status').innerText =
+    `✅ 成功上傳 ${successCount} 張，❌ 失敗 ${failCount} 張`;
+
+  loadWardrobe();  // 全部上傳完才刷新衣櫃
+  input.value = '';  // 重置檔案選擇框
 }
 
-// 載入衣櫃內容
+// 載入衣櫃圖片
 export async function loadWardrobe(category = "all") {
   const userId = window.userId;
-  console.log("DEBUG: 執行 loadWardrobe，類別:", category, "userId:", userId);
-
   if (!userId) {
-    console.warn("WARN: userId 缺失，無法載入衣櫃");
+    console.warn("WARN: userId 缺失，無法載入");
     return;
   }
 
   try {
     const url = `${backendURL}/wardrobe?user_id=${userId}&category=${category}`;
-    console.log("DEBUG: 從後端獲取衣櫃資料:", url);
+    console.log("DEBUG: 從後端獲取衣櫃:", url);
     const res = await fetch(url);
     const data = await res.json();
-    console.log("DEBUG: 後端回應衣櫃資料:", data);
     displayImages(data.images);
   } catch (err) {
     console.error("❌ 載入衣櫃失敗", err);
@@ -90,8 +80,6 @@ export async function loadWardrobe(category = "all") {
 
 // 顯示圖片
 function displayImages(images) {
-  console.log("DEBUG: displayImages 開始，圖片數量:", images.length);
-
   const categorySections = {
     "top": document.getElementById("top-container"),
     "bottom": document.getElementById("bottom-container"),
@@ -100,50 +88,42 @@ function displayImages(images) {
     "shoes": document.getElementById("shoes-container")
   };
 
-  // 清空各分類容器
   for (const key in categorySections) {
-    if (categorySections[key]) {
-      categorySections[key].innerHTML = "";
-      console.log(`DEBUG: 已清空 ${key}-container`);
-    }
+    if (categorySections[key]) categorySections[key].innerHTML = "";
   }
 
   images.forEach(img => {
-    if (categorySections[img.category]) {
-      const wrapper = document.createElement("div");
-      wrapper.className = "image-item";
-      wrapper.style.display = "inline-block";
-      wrapper.style.margin = "10px";
-      wrapper.style.textAlign = "center";
+    if (!categorySections[img.category]) return;
 
-      const imgElement = document.createElement("img");
-      imgElement.src = img.path;
-      imgElement.style.width = "150px";
-      imgElement.style.borderRadius = "8px";
+    const wrapper = document.createElement("div");
+    wrapper.className = "image-item";
+    wrapper.style.display = "inline-block";
+    wrapper.style.margin = "10px";
+    wrapper.style.textAlign = "center";
 
-      const caption = document.createElement("div");
-      caption.style.fontSize = "0.9em";
-      caption.textContent = img.tags ? img.tags : "(描述生成中...)";
-      caption.style.margin = "6px 0 4px 0";
+    const imgElement = document.createElement("img");
+    imgElement.src = img.path;
+    imgElement.style.width = "150px";
+    imgElement.style.borderRadius = "8px";
 
-      const checkbox = document.createElement("input");
-      checkbox.type = "checkbox";
-      checkbox.dataset.path = img.path;
-      checkbox.style.marginTop = "5px";
+    const caption = document.createElement("div");
+    caption.style.fontSize = "0.9em";
+    caption.textContent = img.tags ? img.tags : "(描述生成中...)";
+    caption.style.margin = "6px 0 4px 0";
 
-      wrapper.appendChild(imgElement);
-      wrapper.appendChild(caption);
-      wrapper.appendChild(checkbox);
-      categorySections[img.category].appendChild(wrapper);
+    const checkbox = document.createElement("input");
+    checkbox.type = "checkbox";
+    checkbox.dataset.path = img.path;
+    checkbox.style.marginTop = "5px";
 
-      console.log(`DEBUG: 已添加圖片 (${img.category}): ${img.path}`);
-    } else {
-      console.warn(`WARN: 找不到分類 ${img.category}，圖片路徑: ${img.path}`);
-    }
+    wrapper.appendChild(imgElement);
+    wrapper.appendChild(caption);
+    wrapper.appendChild(checkbox);
+    categorySections[img.category].appendChild(wrapper);
   });
 }
 
-// 刪除已選圖片
+// 刪除選取的圖片
 async function deleteSelected() {
   const userId = window.userId;
   if (!userId) return;
@@ -152,7 +132,6 @@ async function deleteSelected() {
   if (!checkboxes.length) return;
 
   const paths = Array.from(checkboxes).map(cb => cb.dataset.path);
-
   try {
     const res = await fetch(`${backendURL}/delete`, {
       method: 'POST',
@@ -167,34 +146,19 @@ async function deleteSelected() {
       document.getElementById('status').innerText = `❌ 刪除失敗: ${data.message}`;
     }
   } catch (err) {
-    console.error("❌ 刪除過程錯誤", err);
+    console.error("❌ 刪除錯誤", err);
     document.getElementById('status').innerText = `❌ 刪除失敗: ${err.message}`;
   }
 }
 
-// 新增：頁面初始化函式 (給 liff-init.js 調用)
+// 初始化 (由 liff-init.js 呼叫)
 export function initUploadFeatures() {
-  console.log("DEBUG: 初始化 upload 頁面功能");
   const uploadButton = document.getElementById('upload-button');
   const imageInput = document.getElementById('image-input');
-
-  console.log("DEBUG: 綁定前取得元素 uploadButton:", uploadButton);
-  console.log("DEBUG: 綁定前取得元素 imageInput:", imageInput);
-
   if (uploadButton && imageInput) {
-    uploadButton.addEventListener('click', () => {
-      console.log("DEBUG: 上傳按鈕被點擊，觸發選擇框");
-      imageInput.click();
-    });
+    uploadButton.addEventListener('click', () => imageInput.click());
     imageInput.addEventListener('change', uploadImages);
-    console.log("DEBUG: 已完成上傳按鈕與檔案輸入框綁定");
-  } else {
-    console.warn("WARN: 找不到 uploadButton 或 imageInput，無法綁定事件");
   }
-
   const deleteButton = document.getElementById('delete-button');
-  if (deleteButton) {
-    deleteButton.addEventListener('click', deleteSelected);
-    console.log("DEBUG: 已綁定刪除按鈕");
-  }
+  if (deleteButton) deleteButton.addEventListener('click', deleteSelected);
 }
