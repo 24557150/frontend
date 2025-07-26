@@ -177,8 +177,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const uploadButton = document.getElementById('upload-button');
   const imageInput = document.getElementById('image-input');
 
-  console.log("DEBUG: 獲取到的 uploadButton 元素:", uploadButton);
-  console.log("DEBUG: 獲取到的 imageInput 元素:", imageInput);
+  console.log("DEBUG: 獲取到的 uploadButton 元素:", uploadButton); // 新增這行日誌
+  console.log("DEBUG: 獲取到的 imageInput 元素:", imageInput); // 新增這行日誌
 
   if (uploadButton && imageInput) {
     uploadButton.addEventListener('click', () => {
