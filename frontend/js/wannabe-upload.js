@@ -10,6 +10,7 @@ async function uploadWannabeImages() {
 
   if (!userId) {
     document.getElementById('wannabe-status').innerText = "⚠️ 請先登入";
+    input.value = ''; // 清空文件選擇，避免重複提示
     return;
   }
 
@@ -40,6 +41,28 @@ async function uploadWannabeImages() {
 
         // 即時把回傳的 URL 加入畫面
         appendWannabeImage(data.path);
+
+        // *** 新增：呼叫姿勢矯正 API ***
+        console.log(`DEBUG: 對 ${file.name} 呼叫姿勢矯正 API...`);
+        const poseCorrectionFormData = new FormData();
+        poseCorrectionFormData.append('image', file); // 傳送原始圖片給姿勢矯正
+        try {
+            const poseRes = await fetch(`${backendURL}/pose_correction`, {
+                method: 'POST',
+                body: poseCorrectionFormData
+            });
+            const poseData = await poseRes.json();
+            if (poseData.status === 'ok' && poseData.result) {
+                console.log(`INFO: 姿勢矯正成功，添加矯正後圖片: ${poseData.result}`);
+                appendWannabeImage(poseData.result, " (矯正後)"); // 添加矯正後的圖片，可選加上標籤
+            } else {
+                console.warn(`WARN: 姿勢矯正失敗或未返回圖片: ${poseData.message || '未知錯誤'}`);
+            }
+        } catch (poseErr) {
+            console.error(`❌ 姿勢矯正 API 呼叫錯誤:`, poseErr);
+        }
+        // ****************************
+
       } else {
         failCount++;
         console.error(`ERROR: ${file.name} 上傳失敗:`, data.message);
@@ -55,11 +78,11 @@ async function uploadWannabeImages() {
 
   // 全部完成後再刷新一次，確保資料與 Firestore 同步
   loadWannabeWardrobe();
-  input.value = '';
+  input.value = ''; // 清空選擇
 }
 
 // 即時插入單張圖片到頁面
-function appendWannabeImage(url) {
+function appendWannabeImage(url, suffix = "") { // 增加一個 suffix 參數
   const container = document.getElementById("wannabe-container");
   if (!container) return;
 
@@ -76,7 +99,7 @@ function appendWannabeImage(url) {
 
   const caption = document.createElement("div");
   caption.style.fontSize = "0.9em";
-  caption.textContent = ""; // 「我想成為」暫無標籤
+  caption.textContent = `我想成為${suffix}`; // 顯示「我想成為」和可選的後綴
   caption.style.margin = "6px 0 4px 0";
 
   const checkbox = document.createElement("input");

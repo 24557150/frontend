@@ -1,24 +1,37 @@
 from flask import Flask, request, jsonify, g
 from flask_cors import CORS
-import os, uuid, datetime
+import os, uuid, datetime, sys
 from werkzeug.utils import secure_filename
 from google.cloud import storage, firestore
 import json
 from rembg import remove, new_session 
 from io import BytesIO 
-import sys 
 import traceback # 導入 traceback 模組
+
+# 導入 RunningHubImageProcessor (假設 RH05.py 檔案在專案根目錄或 PYTHONPATH 中)
+# 您需要確保 RH05.py 檔案也在您的專案中
+try:
+    from RH05 import RunningHubImageProcessor 
+    print("INFO: Successfully imported RunningHubImageProcessor.")
+except ImportError as e:
+    print(f"CRITICAL ERROR: Failed to import RunningHubImageProcessor. Make sure RH05.py is in your project and accessible: {e}", file=sys.stderr)
+    traceback.print_exc(file=sys.stderr)
+    # 如果無法導入，您可以選擇在此處退出或定義一個假的類來防止後續崩潰
+    RunningHubImageProcessor = None # 將其設為 None，以便在後續使用時檢查
 
 app = Flask(__name__, static_folder="static", static_url_path="/static")
 CORS(app, supports_credentials=True)
 
-DB_DIR = os.path.join("/tmp", "database") 
 UPLOAD_FOLDER = os.path.join("/tmp", "uploads") 
 
-os.makedirs(DB_DIR, exist_ok=True) 
 os.makedirs(UPLOAD_FOLDER, exist_ok=True) 
 
 GCS_BUCKET = "cloths"  
+
+# 從環境變數獲取 RunningHub API Key，避免寫死在程式碼中
+POSE_API_KEY = os.environ.get("POSE_API_KEY", "YOUR_RUNNINGHUB_API_KEY_HERE") 
+if POSE_API_KEY == "YOUR_RUNNINGHUB_API_KEY_HERE":
+    print("WARN: POSE_API_KEY is not set in environment variables. Using placeholder. Pose correction may fail.", file=sys.stderr)
 
 _gcs_client_instance = None 
 
@@ -374,6 +387,62 @@ def delete_wannabe():
             traceback.print_exc(file=sys.stderr) # 打印完整的堆棧追溯
 
     return jsonify({"status": "ok", "deleted": deleted_count})
+
+# --- New route for Pose Correction ---
+@app.route('/pose_correction', methods=['POST'])
+def pose_correction():
+    # 檢查 RunningHubImageProcessor 是否成功導入
+    if RunningHubImageProcessor is None:
+        print("ERROR: RunningHubImageProcessor is not available. Pose correction aborted.", file=sys.stderr)
+        return jsonify({"status": "error", "message": "姿勢矯正模型未載入或導入失敗"}), 500
+
+    image = request.files.get('image')
+    if not image:
+        return jsonify({"status": "error", "message": "缺少圖片"}), 400
+
+    # 為了姿勢矯正模型，將圖片暫存到 /tmp
+    save_path = f"/tmp/{uuid.uuid4().hex}_{secure_filename(image.filename)}"
+    image.save(save_path)
+    print(f"DEBUG: Original image saved to {save_path} for pose correction.")
+
+    try:
+        processor = RunningHubImageProcessor(api_key=POSE_API_KEY)
+        output_dir = "/tmp/pose_results"
+        os.makedirs(output_dir, exist_ok=True)
+        print(f"DEBUG: Calling RunningHubImageProcessor with input: {save_path}, output_dir: {output_dir}")
+        success = processor.process_image(save_path, prompt_text="姿勢矯正", output_dir=output_dir)
+        
+        if success:
+            from pathlib import Path
+            # 找到最新生成的圖片 (RunningHub 可能會生成多個，取最新的)
+            files = sorted(Path(output_dir).glob("*.png"), key=os.path.getmtime)
+            if files:
+                result_path = str(files[-1]) # 取最新的檔案
+                print(f"DEBUG: Pose correction result generated at {result_path}")
+                # 上傳姿勢矯正後的圖片到 GCS
+                blob_name = upload_image_to_gcs(result_path, GCS_BUCKET)
+                signed_url = get_signed_url(GCS_BUCKET, blob_name)
+                print(f"INFO: Pose correction successful. Result URL: {signed_url}")
+                return jsonify({"status": "ok", "result": signed_url})
+            else:
+                print("WARN: Pose correction succeeded but no output image found.", file=sys.stderr)
+                return jsonify({"status": "error", "message": "姿勢矯正失敗：未生成圖片"}), 500
+        else:
+            print("ERROR: RunningHubImageProcessor returned False for success.", file=sys.stderr)
+            return jsonify({"status": "error", "message": "姿勢矯正失敗"}), 500
+    except Exception as e:
+        print(f"ERROR: Pose correction failed: {e}", file=sys.stderr)
+        traceback.print_exc(file=sys.stderr)
+        return jsonify({"status": "error", "message": f"姿勢矯正過程中發生錯誤: {e}"}), 500
+    finally:
+        # 清理暫存檔案
+        if os.path.exists(save_path):
+            os.remove(save_path)
+            print(f"DEBUG: Cleaned up temporary input file: {save_path}")
+        if os.path.exists(output_dir):
+            import shutil
+            shutil.rmtree(output_dir)
+            print(f"DEBUG: Cleaned up temporary pose results directory: {output_dir}")
 
 
 @app.route('/')
