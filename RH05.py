@@ -37,7 +37,7 @@ class RunningHubImageProcessor:
     """RunningHub 圖像處理器"""
     
     def __init__(self, api_key: str = None, workflow_id: str = None, 
-                 load_image_node_id: str = "65", base_url: str = "https://www.runninghub.ai/process"):
+                 load_image_node_id: str = "65", base_url: str = "https://api.runninghub.ai"):
         """
         初始化處理器
         
@@ -264,8 +264,8 @@ class RunningHubImageProcessor:
         Returns:
             是否處理成功
         """
-        print("🎨 RunningHub 圖生圖 AI 處理器 (直接 API 調用模式)")
-        print("=" * 50)
+        print("🎨 RunningHub 圖生圖 AI 處理器 (直接 API 調用模式)", file=sys.stderr)
+        print("=" * 50, file=sys.stderr)
         
         # 驗證檔案
         is_valid, error_msg = self.validate_file(image_path)
@@ -320,6 +320,7 @@ class RunningHubImageProcessor:
                 print(f"✅ 姿勢矯正成功，結果保存到: {out_path}", file=sys.stderr)
                 return True
             else:
+                # --- 修改這裡：打印完整的響應內容 ---
                 print(f"ERROR: RunningHub API 回傳錯誤: {response.status_code} - {response.text}", file=sys.stderr)
                 return False
         except requests.exceptions.Timeout as e:
