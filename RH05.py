@@ -438,13 +438,6 @@ def main():
     )
     
     parser.add_argument(
-        '-t', '--timeout',
-        type=int,
-        default=60, # 調整預設超時時間為 60 秒
-        help='最大等待時間，秒 (默認: 60)'
-    )
-    
-    parser.add_argument(
         '--base-url',
         default='https://api.runninghub.ai', # 調整預設 API URL
         help='API 基礎 URL (默認: https://api.runninghub.ai)'
