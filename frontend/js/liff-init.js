@@ -6,6 +6,7 @@ const liffId = "2007733246-nAexA2b9"; // 你現有的 LIFF ID
 
 // 用於儲存根據頁面動態載入的功能模組中的載入函數
 let loadContentFunction; 
+let initPageFeaturesFunction; // 新增一個變數來儲存頁面初始化功能
 
 async function initializeLiff() {
   try {
@@ -39,13 +40,15 @@ async function initializeLiff() {
     // 根據當前頁面路徑動態導入對應的 JavaScript 檔案
     try {
         if (window.location.pathname.includes('wannabe.html')) {
-            const { loadWannabeWardrobe } = await import('./wannabe-upload.js');
+            const { loadWannabeWardrobe, initWannabeFeatures } = await import('./wannabe-upload.js');
             loadContentFunction = loadWannabeWardrobe;
-            console.log("DEBUG: 在 wannabe.html 中載入 loadWannabeWardrobe。");
+            initPageFeaturesFunction = initWannabeFeatures; // 儲存初始化功能
+            console.log("DEBUG: 在 wannabe.html 中載入 loadWannabeWardrobe 和 initWannabeFeatures。");
         } else {
-            const { loadWardrobe } = await import('./upload.js');
+            const { loadWardrobe, initUploadFeatures } = await import('./upload.js'); // 導入新的 initUploadFeatures
             loadContentFunction = loadWardrobe;
-            console.log("DEBUG: 在 index.html 中載入 loadWardrobe。");
+            initPageFeaturesFunction = initUploadFeatures; // 儲存初始化功能
+            console.log("DEBUG: 在 index.html 中載入 loadWardrobe 和 initUploadFeatures。");
         }
     } catch (importError) {
         console.error("ERROR: 動態導入模組失敗:", importError);
@@ -55,10 +58,7 @@ async function initializeLiff() {
         return; // 導入失敗則直接返回，不執行後續的 loadContentFunction()
     }
 
-    // 確保 loadContentFunction 已經被賦值後再調用
-    // 這個 if 判斷現在放在 DOMContentLoaded 監聽器內部，以確保元素已經準備好
-    // 實際調用 loadContentFunction() 的部分將在 DOMContentLoaded 監聽器中處理
-    console.log("DEBUG: loadContentFunction 已被賦值，等待 DOMContentLoaded 觸發。");
+    console.log("DEBUG: loadContentFunction 和 initPageFeaturesFunction 已被賦值，等待 DOMContentLoaded 觸發。");
 
 
   } catch (err) {
@@ -75,10 +75,18 @@ async function initializeLiff() {
 document.addEventListener("DOMContentLoaded", async () => {
     await initializeLiff(); // 首先初始化 LIFF
 
-    // 在 LIFF 初始化成功且 loadContentFunction 已被賦值後，再調用它
+    // 在 LIFF 初始化成功且頁面初始化功能已準備好後，再調用它
+    if (initPageFeaturesFunction) {
+        initPageFeaturesFunction(); // 調用對應頁面的初始化功能 (例如綁定按鈕)
+        console.log("DEBUG: DOMContentLoaded 觸發，並調用 initPageFeaturesFunction。");
+    } else {
+        console.warn("WARN: DOMContentLoaded 後 initPageFeaturesFunction 仍未定義，無法初始化頁面功能。");
+    }
+
+    // 最後調用載入內容的函式
     if (loadContentFunction) {
         loadContentFunction(); // 調用對應頁面的載入函數
-        console.log("DEBUG: DOMContentLoaded 觸發，並調用 loadContentFunction。");
+        console.log("DEBUG: DOMContentLoaded 觸發，並調用 loadContentFunction。"); // 調整日誌位置
     } else {
         console.warn("WARN: DOMContentLoaded 後 loadContentFunction 仍未定義，無法載入圖片。");
     }
