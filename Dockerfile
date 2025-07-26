@@ -12,4 +12,4 @@ RUN mkdir -p /tmp/outputs
 
 ENV PORT=8080
 
-CMD ["python", "RH05.py"]
+CMD ["gunicorn", "-b", ":8080", "app:app"]
