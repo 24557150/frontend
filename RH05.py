@@ -37,7 +37,7 @@ class RunningHubImageProcessor:
     """RunningHub 圖像處理器"""
     
     def __init__(self, api_key: str = None, workflow_id: str = None, 
-                 load_image_node_id: str = "65", base_url: str = "https://www.runninghub.ai"):
+                 load_image_node_id: str = "65", base_url: str = "https://www.runninghub.ai/process"):
         """
         初始化處理器
         
