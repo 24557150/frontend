@@ -37,7 +37,7 @@ class RunningHubImageProcessor:
     """RunningHub 圖像處理器"""
     
     def __init__(self, api_key: str = None, workflow_id: str = None, 
-                 load_image_node_id: str = "65", base_url: str = "https://www.runninghub.ai"):
+                 load_image_node_id: str = "65", base_url: str = "https://api.runninghub.ai"):
         """
         初始化處理器
         
@@ -47,9 +47,9 @@ class RunningHubImageProcessor:
             load_image_node_id: Load Image 節點 ID
             base_url: API 基礎 URL
         """
-        # 將 'YOUR_ACTUAL_RUNNINGHUB_API_KEY' 替換為您真實的 API Key
-        # 注意：這不是推薦的生產環境做法，僅用於測試
-        self.api_key = "YOUR_ACTUAL_RUNNINGHUB_API_KEY" 
+        # 將 API Key 直接設定為預設值或您提供的真實 Key
+        # 注意：這不是推薦的生產環境做法，建議使用環境變數
+        self.api_key = "dcbfc7a79ccb45b89cea62cdba512755" 
         # 原始行：self.api_key = api_key or "dcbfc7a79ccb45b89cea62cdba512755" 
         
         self.workflow_id = workflow_id or "1944945226931953665" # 姿勢矯正的預設 workflow ID
@@ -448,8 +448,8 @@ def main():
     
     parser.add_argument(
         '--base-url',
-        default='https://www.runninghub.ai', # 調整預設 API URL
-        help='API 基礎 URL (默認: https://www.runninghub.ai)'
+        default='https://api.runninghub.ai', # 調整預設 API URL
+        help='API 基礎 URL (默認: https://api.runninghub.ai)'
     )
     
     parser.add_argument(
