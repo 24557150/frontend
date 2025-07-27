@@ -37,7 +37,7 @@ class RunningHubImageProcessor:
     """RunningHub 圖像處理器"""
     
     def __init__(self, api_key: str = None, workflow_id: str = None, 
-                 load_image_node_id: str = "65", base_url: str = "https://www.runninghub.ai"):
+                 load_image_node_id: str = "65", base_url: str = "https://api.runninghub.ai"):
         """
         初始化處理器
         
@@ -47,8 +47,11 @@ class RunningHubImageProcessor:
             load_image_node_id: Load Image 節點 ID
             base_url: API 基礎 URL
         """
-        # 使用傳入的 api_key，如果為 None 則使用預設值 (應從環境變數獲取)
-        self.api_key = api_key or "dcbfc7a79ccb45b89cea62cdba512755" 
+        # 將 'YOUR_ACTUAL_RUNNINGHUB_API_KEY' 替換為您真實的 API Key
+        # 注意：這不是推薦的生產環境做法，僅用於測試
+        self.api_key = "YOUR_ACTUAL_RUNNINGHUB_API_KEY" 
+        # 原始行：self.api_key = api_key or "dcbfc7a79ccb45b89cea62cdba512755" 
+        
         self.workflow_id = workflow_id or "1944945226931953665" # 姿勢矯正的預設 workflow ID
         self.load_image_node_id = load_image_node_id
         self.base_url = base_url
@@ -320,7 +323,6 @@ class RunningHubImageProcessor:
                 print(f"✅ 姿勢矯正成功，結果保存到: {out_path}", file=sys.stderr)
                 return True
             else:
-                # --- 修改這裡：打印完整的響應內容 ---
                 print(f"ERROR: RunningHub API 回傳錯誤: {response.status_code} - {response.text}", file=sys.stderr)
                 return False
         except requests.exceptions.Timeout as e:
@@ -438,9 +440,16 @@ def main():
     )
     
     parser.add_argument(
+        '-t', '--timeout',
+        type=int,
+        default=60, # 調整預設超時時間為 60 秒
+        help='最大等待時間，秒 (默認: 60)'
+    )
+    
+    parser.add_argument(
         '--base-url',
-        default='https://www.runninghub.ai', # 調整預設 API URL
-        help='API 基礎 URL (默認: https://www.runninghub.ai)'
+        default='https://api.runninghub.ai', # 調整預設 API URL
+        help='API 基礎 URL (默認: https://api.runninghub.ai)'
     )
     
     parser.add_argument(
