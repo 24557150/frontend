@@ -1,3 +1,4 @@
+from RH05 import RunningHubImageProcessor
 from flask import Flask, request, jsonify, g
 from flask_cors import CORS
 import os, uuid, datetime, sys
