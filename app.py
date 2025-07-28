@@ -7,6 +7,7 @@ import json
 from rembg import remove, new_session
 from io import BytesIO
 import traceback # 導入 traceback 模組
+from pathlib import Path
 import shutil # 導入 shutil 用於刪除目錄
 
 # 導入 RunningHubImageProcessor (現在從新的檔案名稱 runninghub_processor.py 導入)
@@ -110,6 +111,57 @@ def get_signed_url(bucket_name, blob_name, expire_minutes=60):
     )
     print(f"DEBUG: Generated signed URL for {blob_name}.")
     return url
+
+def process_and_return(image_bytes, prompt_text="姿勢矯正"):
+    """
+    使用 RunningHubImageProcessor 處理圖片，回傳 GCS 簽名 URL
+    Args:
+        image_bytes (bytes): 輸入圖片內容
+        prompt_text (str): 提示詞 (可選)
+    Returns:
+        str: 上傳到 GCS 的簽名 URL (成功時)，或 None (失敗)
+    """
+    if RunningHubImageProcessor is None:
+        print("ERROR: RunningHubImageProcessor not available.", file=sys.stderr)
+        return None
+
+    tmp_input = f"/tmp/{uuid.uuid4().hex}.png"
+    with open(tmp_input, "wb") as f:
+        f.write(image_bytes)
+
+    output_dir = f"/tmp/rh_results_{uuid.uuid4().hex}"
+    os.makedirs(output_dir, exist_ok=True)
+
+    try:
+        processor = RunningHubImageProcessor(api_key=POSE_API_KEY, base_url="https://www.runninghub.cn")
+        success = processor.process_image(tmp_input, prompt_text=prompt_text, output_dir=output_dir, max_wait_time=300)
+        if not success:
+            print("ERROR: RunningHub 處理失敗", file=sys.stderr)
+            return None
+
+        results = list(Path(output_dir).glob("*.png"))
+        if not results:
+            print("ERROR: 沒有找到生成結果", file=sys.stderr)
+            return None
+
+        result_path = str(results[0])
+        blob_name = upload_image_to_gcs(result_path, GCS_BUCKET)
+        signed_url = get_signed_url(GCS_BUCKET, blob_name)
+        return signed_url
+
+    except Exception as e:
+        print(f"ERROR: process_and_return 發生錯誤: {e}", file=sys.stderr)
+        traceback.print_exc(file=sys.stderr)
+        return None
+    finally:
+        try:
+            if os.path.exists(tmp_input):
+                os.remove(tmp_input)
+            if os.path.exists(output_dir):
+                shutil.rmtree(output_dir)
+        except:
+            pass
+
 
 @app.route('/upload', methods=['POST'])
 def upload():
