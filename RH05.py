@@ -36,7 +36,6 @@ except ImportError:
 class RunningHubImageProcessor:
     """RunningHub 圖像處理器"""
     
-    
     def __init__(self, api_key: str = None, workflow_id: str = None, 
                  load_image_node_id: str = "65", base_url: str = "https://www.runninghub.cn"):
         """
@@ -74,6 +73,25 @@ class RunningHubImageProcessor:
         self.supported_formats = {
             '.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp'
         }
+    
+    def get_default_workflow_id(self) -> str:
+        """自動取得第一個可用的 Workflow ID"""
+        try:
+            url = f"{self.base_url}/task/openapi/workflow/list"
+            resp = self.session.get(url, params={"apiKey": self.api_key}, timeout=15)
+            if resp.status_code == 200:
+                data = resp.json()
+                workflows = data.get("data", [])
+                if workflows:
+                    first_id = workflows[0].get("id")
+                    print(f"INFO: 自動取得 Workflow ID: {first_id}")
+                    return str(first_id)
+                print("WARN: 無法自動獲取 Workflow ID")
+            else:
+                print(f"ERROR: API 狀態碼 {resp.status_code}")
+        except Exception as e:
+            print(f"ERROR: 獲取 Workflow ID 失敗: {e}")
+        return None
         
     def validate_file(self, file_path: str) -> Tuple[bool, str]:
         """
