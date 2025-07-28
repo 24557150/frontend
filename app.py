@@ -4,14 +4,15 @@ import os, uuid, datetime, sys
 from werkzeug.utils import secure_filename
 from google.cloud import storage, firestore
 import json
-from rembg import remove, new_session 
-from io import BytesIO 
+from rembg import remove, new_session
+from io import BytesIO
 import traceback # 導入 traceback 模組
+import shutil # 導入 shutil 用於刪除目錄
 
 # 導入 RunningHubImageProcessor (假設 RH05.py 檔案在專案根目錄或 PYTHONPATH 中)
 # 您需要確保 RH05.py 檔案也在您的專案中
 try:
-    from RH05 import RunningHubImageProcessor 
+    from RH05 import RunningHubImageProcessor
     print("INFO: Successfully imported RunningHubImageProcessor.")
 except ImportError as e:
     print(f"CRITICAL ERROR: Failed to import RunningHubImageProcessor. Make sure RH05.py is in your project and accessible: {e}", file=sys.stderr)
@@ -22,24 +23,25 @@ except ImportError as e:
 app = Flask(__name__, static_folder="static", static_url_path="/static")
 CORS(app, supports_credentials=True)
 
-UPLOAD_FOLDER = os.path.join("/tmp", "uploads") 
+UPLOAD_FOLDER = os.path.join("/tmp", "uploads")
 
-os.makedirs(UPLOAD_FOLDER, exist_ok=True) 
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
-GCS_BUCKET = "cloths"  
+GCS_BUCKET = "cloths"
 
 # 從環境變數獲取 RunningHub API Key，避免寫死在程式碼中
-POSE_API_KEY = os.environ.get("POSE_API_KEY", "YOUR_RUNNINGHUB_API_KEY_HERE") 
-if POSE_API_KEY == "YOUR_RUNNINGHUB_API_KEY_HERE":
-    print("WARN: POSE_API_KEY is not set in environment variables. Using placeholder. Pose correction may fail.", file=sys.stderr)
+# 注意：如果 RH05.py 內部也硬編碼了 Key，則以 RH05.py 內部為準
+POSE_API_KEY = os.environ.get("POSE_API_KEY", "dcbfc7a79ccb45b89cea62cdba512755")
+if POSE_API_KEY == "dcbfc7a79ccb45b89cea62cdba512755":
+    print("WARN: POSE_API_KEY is not set in environment variables or using default placeholder. Pose correction may fail.", file=sys.stderr)
 
-_gcs_client_instance = None 
+_gcs_client_instance = None
 
 def get_gcs_client():
     global _gcs_client_instance
     if _gcs_client_instance is None:
         gcs_credentials_json = os.environ.get("GCP_SECRET_KEY")
-        
+
         if gcs_credentials_json:
             try:
                 credentials_info = json.loads(gcs_credentials_json)
@@ -69,15 +71,15 @@ def get_firestore_db():
         print("DEBUG: Firestore Client initialized.")
     return _firestore_db_instance
 
-_rembg_session = None 
+_rembg_session = None
 def get_rembg_session():
     global _rembg_session
     if _rembg_session is None:
         try:
             print("DEBUG: Setting XDG_CACHE_HOME to /tmp for rembg model cache.")
-            os.environ['XDG_CACHE_HOME'] = '/tmp' 
+            os.environ['XDG_CACHE_HOME'] = '/tmp'
             print("DEBUG: Attempting to initialize rembg session with 'u2net' model...")
-            _rembg_session = new_session("u2net") 
+            _rembg_session = new_session("u2net")
             print("DEBUG: Rembg session initialized and model loaded successfully.")
         except Exception as e:
             print(f"CRITICAL ERROR: Rembg model initialization failed: {e}", file=sys.stderr)
@@ -92,7 +94,7 @@ def upload_image_to_gcs(local_path, bucket_name, data_bytes=None):
     # 這裡我們只使用 basename，不使用原始副檔名，直接指定為 .png
     blob_name = f"{uuid.uuid4().hex}_{os.path.splitext(os.path.basename(local_path))[0]}.png"
     blob = bucket.blob(blob_name)
-    
+
     if data_bytes:
         blob.upload_from_string(data_bytes, content_type='image/png')
         print(f"DEBUG: Data bytes uploaded to GCS as {blob_name}.")
@@ -122,12 +124,12 @@ def upload():
         return jsonify({"status": "error", "message": "缺少必要參數"}), 400
 
     input_image_bytes = image.read()
-    
+
     save_dir = os.path.join(UPLOAD_FOLDER, user_id, category)
     os.makedirs(save_dir, exist_ok=True)
 
     tags = ""
-    temp_output_filepath = None 
+    temp_output_filepath = None
 
     try:
         print("DEBUG: Starting background removal...")
@@ -166,7 +168,7 @@ def upload():
         if temp_output_filepath and os.path.exists(temp_output_filepath):
             os.remove(temp_output_filepath)
             print(f"DEBUG: Cleaned up temporary rembg output file: {temp_output_filepath}")
-        pass 
+        pass
 
 @app.route('/wardrobe', methods=['GET'])
 def wardrobe():
@@ -177,16 +179,16 @@ def wardrobe():
 
     images = []
     try:
-        db = get_firestore_db() 
+        db = get_firestore_db()
         query = db.collection('wardrobe').document(user_id).collection('items')
-        
+
         if category and category != "all":
             query = query.where('category', '==', category)
-        
+
         query = query.order_by('timestamp', direction=firestore.Query.DESCENDING)
-        
+
         docs = query.stream()
-        
+
         for doc in docs:
             item_data = doc.to_dict()
             blob_name = item_data.get('filename')
@@ -216,7 +218,7 @@ def delete():
 
     deleted_count = 0
     db = get_firestore_db()
-    
+
     for url in paths:
         if "storage.googleapis.com" in url:
             filename = url.split("/")[-1].split("?")[0]
@@ -232,17 +234,17 @@ def delete():
             blob = bucket.blob(filename)
             blob.delete()
             print(f"DEBUG: GCS blob {filename} deleted.")
-            
+
             # --- Firestore: 找到並刪除 Firestore 中的記錄 ---
             query = db.collection('wardrobe').document(user_id).collection('items').where('filename', '==', filename)
             docs = query.stream()
-            
+
             found_docs = 0
             for doc in docs:
                 doc.reference.delete()
                 print(f"DEBUG: Firestore document {doc.id} deleted for filename {filename}.")
                 found_docs += 1
-            
+
             if found_docs > 0:
                 deleted_count += 1
             else:
@@ -390,7 +392,7 @@ def delete_wannabe():
 
     return jsonify({"status": "ok", "deleted": deleted_count})
 
-# --- New route for Pose Correction ---
+# --- New route for Pose Correction (Modified to use multi-step RH05.py) ---
 @app.route('/pose_correction', methods=['POST'])
 def pose_correction():
     # 檢查 RunningHubImageProcessor 是否成功導入
@@ -410,50 +412,70 @@ def pose_correction():
         f.write(image_bytes)
     print(f"DEBUG: Original image saved to {save_path} for pose correction.")
 
+    # 設置 RunningHub 輸出目錄
+    output_dir = "/tmp/pose_results_rh" # 使用不同的目錄名，避免衝突
+    os.makedirs(output_dir, exist_ok=True)
+
     try:
-        processor = RunningHubImageProcessor(api_key=POSE_API_KEY)
-        output_dir = "/tmp/pose_results"
-        os.makedirs(output_dir, exist_ok=True)
-        print(f"DEBUG: Calling RunningHubImageProcessor with input: {save_path}, output_dir: {output_dir}")
-        
-        # 調用 RunningHubImageProcessor 的 process_image 方法
-        success = processor.process_image(
-            image_path=save_path, 
-            prompt_text="姿勢矯正", 
-            output_dir=output_dir,
-            max_wait_time=60 # 給予足夠的超時時間
-        )
-        
-        if success:
-            from pathlib import Path
-            # RunningHubImageProcessor 應該會將結果保存為 PNG
-            files = sorted(Path(output_dir).glob("*.png"), key=os.path.getmtime)
-            if files:
-                result_path = str(files[-1]) # 取最新的檔案
-                print(f"DEBUG: Pose correction result generated at {result_path}")
-                # 上傳姿勢矯正後的圖片到 GCS
-                blob_name = upload_image_to_gcs(result_path, GCS_BUCKET)
-                signed_url = get_signed_url(GCS_BUCKET, blob_name)
-                print(f"INFO: Pose correction successful. Result URL: {signed_url}")
-                return jsonify({"status": "ok", "result": signed_url})
-            else:
-                print("WARN: Pose correction succeeded but no output image found.", file=sys.stderr)
-                return jsonify({"status": "error", "message": "姿勢矯正失敗：未生成圖片"}), 500
+        # 初始化 RunningHubImageProcessor，使用與您提供的 RH05.py 匹配的 base_url
+        # 注意：RH05.py 內部可能硬編碼了 API Key，這會覆蓋 POSE_API_KEY 環境變數
+        processor = RunningHubImageProcessor(api_key=POSE_API_KEY, base_url="https://www.runninghub.cn")
+        print(f"DEBUG: Initialized RunningHubImageProcessor with base_url: {processor.base_url}")
+
+        # --- 多步驟調用 RunningHub API ---
+        # 1. 上傳圖片
+        uploaded_filename = processor.upload_image(save_path)
+        if not uploaded_filename:
+            print("ERROR: RunningHub image upload failed.", file=sys.stderr)
+            return jsonify({"status": "error", "message": "姿勢矯正失敗：圖片上傳到 RunningHub 失敗"}), 500
+
+        # 2. 創建任務
+        task_id = processor.create_task(uploaded_filename, prompt_text="姿勢矯正")
+        if not task_id:
+            print("ERROR: RunningHub task creation failed.", file=sys.stderr)
+            return jsonify({"status": "error", "message": "姿勢矯正失敗：創建 RunningHub 任務失敗"}), 500
+
+        # 3. 等待任務完成
+        # max_wait_time 應該足夠長，例如 300 秒 (5 分鐘)
+        if not processor.wait_for_completion(task_id, max_wait_time=300):
+            print("ERROR: RunningHub task did not complete successfully or timed out.", file=sys.stderr)
+            return jsonify({"status": "error", "message": "姿勢矯正失敗：RunningHub 任務超時或未成功完成"}), 500
+
+        # 4. 獲取結果
+        results = processor.get_task_results(task_id)
+        if not results:
+            print("ERROR: RunningHub failed to get task results.", file=sys.stderr)
+            return jsonify({"status": "error", "message": "姿勢矯正失敗：獲取 RunningHub 結果失敗"}), 500
+
+        # 5. 保存結果 (下載到本地)
+        # save_results 會將圖片下載到 output_dir，並返回保存的檔案路徑列表
+        saved_local_paths = processor.save_results(results, output_dir=output_dir)
+
+        if saved_local_paths:
+            # RunningHubImageProcessor 應該會將結果保存為 PNG 或 JPG
+            # 這裡我們預期它會保存至少一張圖片
+            result_path = saved_local_paths[0] # 取第一張結果圖片
+            print(f"DEBUG: Pose correction result generated locally at {result_path}")
+
+            # 上傳姿勢矯正後的圖片到 GCS
+            blob_name = upload_image_to_gcs(result_path, GCS_BUCKET)
+            signed_url = get_signed_url(GCS_BUCKET, blob_name)
+            print(f"INFO: Pose correction successful. Result URL: {signed_url}")
+            return jsonify({"status": "ok", "result": signed_url})
         else:
-            print("ERROR: RunningHubImageProcessor returned False for success.", file=sys.stderr)
-            return jsonify({"status": "error", "message": "姿勢矯正失敗"}), 500
+            print("WARN: Pose correction succeeded but no output image found locally.", file=sys.stderr)
+            return jsonify({"status": "error", "message": "姿勢矯正失敗：未生成圖片"}), 500
     except Exception as e:
         print(f"ERROR: Pose correction failed: {e}", file=sys.stderr)
         traceback.print_exc(file=sys.stderr)
         return jsonify({"status": "error", "message": f"姿勢矯正過程中發生錯誤: {e}"}), 500
     finally:
-        # 清理暫存檔案
+        # 清理暫存檔案和目錄
         if os.path.exists(save_path):
             os.remove(save_path)
             print(f"DEBUG: Cleaned up temporary input file: {save_path}")
         if os.path.exists(output_dir):
-            import shutil
-            shutil.rmtree(output_dir)
+            shutil.rmtree(output_dir) # 刪除整個目錄
             print(f"DEBUG: Cleaned up temporary pose results directory: {output_dir}")
 
 
@@ -472,16 +494,16 @@ if __name__ == '__main__':
             except Exception as e:
                 print(f"CRITICAL ERROR: GCS Client failed to initialize on app startup: {e}", file=sys.stderr)
                 traceback.print_exc(file=sys.stderr)
-            
+
             try:
                 get_firestore_db()
                 print("INFO: Firestore Client successfully initialized on app startup.")
             except Exception as e:
                 print(f"CRITICAL ERROR: Firestore Client failed to initialize on app startup: {e}", file=sys.stderr)
                 traceback.print_exc(file=sys.stderr)
-            
+
             try:
-                get_rembg_session() 
+                get_rembg_session()
                 print("INFO: Rembg model pre-loaded on app startup.")
             except Exception as e:
                 print(f"CRITICAL ERROR: Rembg model pre-load failed on app startup: {e}", file=sys.stderr)

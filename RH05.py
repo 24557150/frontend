@@ -11,10 +11,14 @@ import shutil # 導入 shutil 用於刪除目錄
 
 # 導入 RunningHubImageProcessor (假設 RH05.py 檔案在專案根目錄或 PYTHONPATH 中)
 # 您需要確保 RH05.py 檔案也在您的專案中
-class RunningHubImageProcessor:
-    def __init__(self, api_key, base_url):
-        self.api_key = api_key
-        self.base_url = base_url
+try:
+    from RH05 import RunningHubImageProcessor
+    print("INFO: Successfully imported RunningHubImageProcessor.")
+except ImportError as e:
+    print(f"CRITICAL ERROR: Failed to import RunningHubImageProcessor. Make sure RH05.py is in your project and accessible: {e}", file=sys.stderr)
+    traceback.print_exc(file=sys.stderr)
+    # 如果無法導入，您可以選擇在此處退出或定義一個假的類來防止後續崩潰
+    RunningHubImageProcessor = None # 將其設為 None，以便在後續使用時檢查
 
 app = Flask(__name__, static_folder="static", static_url_path="/static")
 CORS(app, supports_credentials=True)
