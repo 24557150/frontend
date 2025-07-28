@@ -11,7 +11,7 @@ import shutil # 導入 shutil 用於刪除目錄
 
 # 導入 RunningHubImageProcessor (現在從新的檔案名稱 runninghub_processor.py 導入)
 try:
-    from runninghub_processor import RunningHubImageProcessor # <--- 這裡已修改
+    from runninghub_processor import RunningHubImageProcessor
     print("INFO: Successfully imported RunningHubImageProcessor from runninghub_processor.py.")
 except ImportError as e:
     print(f"CRITICAL ERROR: Failed to import RunningHubImageProcessor. Make sure runninghub_processor.py is in your project and accessible: {e}", file=sys.stderr)
@@ -250,6 +250,8 @@ def delete():
 
     return jsonify({"status": "ok", "deleted": deleted_count})
 
+# --- New routes for 'Wannabe' images ---
+
 @app.route('/upload_wannabe', methods=['POST'])
 def upload_wannabe():
     image = request.files.get('image')
@@ -259,6 +261,7 @@ def upload_wannabe():
 
     input_image_bytes = image.read()
 
+    # Save to a different directory or just use a generic one for wannabe
     save_dir = os.path.join(UPLOAD_FOLDER, user_id, "wannabe")
     os.makedirs(save_dir, exist_ok=True)
 
@@ -276,13 +279,16 @@ def upload_wannabe():
             f.write(output_image_bytes)
         print(f"DEBUG: Rembg output temporarily saved to {temp_output_filepath}")
 
+        # Upload to GCS
         blob_name = upload_image_to_gcs(temp_output_filepath, GCS_BUCKET, data_bytes=output_image_bytes)
 
+        # Save record to a new Firestore collection 'wannabe_wardrobe'
         db = get_firestore_db()
         doc_ref = db.collection('wannabe_wardrobe').document(user_id).collection('items').document()
         doc_ref.set({
             'filename': blob_name,
             'timestamp': firestore.SERVER_TIMESTAMP
+            # 'tags' field can be added later if needed for AI descriptions
         })
         print(f"DEBUG: Wannabe image record saved to Firestore for user {user_id}: {blob_name}")
 
@@ -290,7 +296,7 @@ def upload_wannabe():
         return jsonify({"status": "ok", "path": signed_url})
     except Exception as e:
         print(f"ERROR: Wannabe image upload processing failed (including rembg): {e}", file=sys.stderr)
-        traceback.print_exc(file=sys.stderr)
+        traceback.print_exc(file=sys.stderr) # 打印完整的堆棧追溯
         return jsonify({"status": "error", "message": f"上傳「我想成為」圖片失敗: {e}"}), 500
     finally:
         if temp_output_filepath and os.path.exists(temp_output_filepath):
@@ -307,6 +313,7 @@ def wannabe_wardrobe():
     images = []
     try:
         db = get_firestore_db()
+        # Query the new collection 'wannabe_wardrobe'
         query = db.collection('wannabe_wardrobe').document(user_id).collection('items')
         query = query.order_by('timestamp', direction=firestore.Query.DESCENDING)
 
@@ -319,13 +326,13 @@ def wannabe_wardrobe():
                 signed_url = get_signed_url(GCS_BUCKET, blob_name)
                 images.append({
                     "path": signed_url,
-                    "tags": item_data.get('tags', '')
+                    "tags": item_data.get('tags', '') # Can be empty for now
                 })
         print(f"DEBUG: Retrieved {len(images)} wannabe images from Firestore for user {user_id}.")
 
     except Exception as e:
         print(f"ERROR: Failed to retrieve wannabe wardrobe from Firestore: {e}", file=sys.stderr)
-        traceback.print_exc(file=sys.stderr)
+        traceback.print_exc(file=sys.stderr) # 打印完整的堆棧追溯
         return jsonify({"status": "error", "message": f"載入「我想成為」圖片失敗: {e}"}), 500
 
     return jsonify({"images": images})
@@ -342,6 +349,7 @@ def delete_wannabe():
     db = get_firestore_db()
 
     for url in paths:
+        # Extract filename from signed URL
         if "storage.googleapis.com" in url:
             filename = url.split("/")[-1].split("?")[0]
         elif "X-Goog-Algorithm" in url:
@@ -350,12 +358,14 @@ def delete_wannabe():
             filename = url
 
         try:
+            # --- GCS: Delete the actual image file ---
             client = get_gcs_client()
             bucket = client.bucket(GCS_BUCKET)
             blob = bucket.blob(filename)
             blob.delete()
             print(f"DEBUG: GCS blob {filename} deleted for wannabe.")
 
+            # --- Firestore: Find and delete the record in the 'wannabe_wardrobe' collection ---
             query = db.collection('wannabe_wardrobe').document(user_id).collection('items').where('filename', '==', filename)
             docs = query.stream()
 
@@ -376,8 +386,10 @@ def delete_wannabe():
 
     return jsonify({"status": "ok", "deleted": deleted_count})
 
+# --- New route for Pose Correction (Modified to use multi-step RH05.py) ---
 @app.route('/pose_correction', methods=['POST'])
 def pose_correction():
+    # 檢查 RunningHubImageProcessor 是否成功導入
     if RunningHubImageProcessor is None:
         print("ERROR: RunningHubImageProcessor is not available. Pose correction aborted.", file=sys.stderr)
         return jsonify({"status": "error", "message": "姿勢矯正模型未載入或導入失敗"}), 500
@@ -386,17 +398,23 @@ def pose_correction():
     if not image:
         return jsonify({"status": "error", "message": "缺少圖片"}), 400
 
+    # 為了姿勢矯正模型，將圖片暫存到 /tmp
     save_path = f"/tmp/{uuid.uuid4().hex}_{secure_filename(image.filename)}"
+    # 將圖片內容讀取到 BytesIO，然後保存到暫存路徑
     image_bytes = image.read()
     with open(save_path, 'wb') as f:
         f.write(image_bytes)
     print(f"DEBUG: Original image saved to {save_path} for pose correction.")
 
-    output_dir = "/tmp/pose_results_rh"
+    # 設置 RunningHub 輸出目錄
+    output_dir = "/tmp/pose_results_rh" # 使用不同的目錄名，避免衝突
     os.makedirs(output_dir, exist_ok=True)
 
     try:
-        # 使用 POSE_API_KEY 環境變數，並設定 base_url 為 https://www.runninghub.cn
+        # 在這裡打印實際讀取到的 POSE_API_KEY
+        print(f"DEBUG: POSE_API_KEY read in pose_correction route: {POSE_API_KEY[:8]}...", file=sys.stderr) # 只打印前8位，避免洩露
+
+        # 初始化 RunningHubImageProcessor，使用與您提供的 runninghub_processor.py 匹配的 base_url
         processor = RunningHubImageProcessor(api_key=POSE_API_KEY, base_url="https://www.runninghub.cn")
         print(f"DEBUG: Initialized RunningHubImageProcessor with base_url: {processor.base_url}")
 
@@ -414,6 +432,7 @@ def pose_correction():
             return jsonify({"status": "error", "message": "姿勢矯正失敗：創建 RunningHub 任務失敗"}), 500
 
         # 3. 等待任務完成
+        # max_wait_time 應該足夠長，例如 300 秒 (5 分鐘)
         if not processor.wait_for_completion(task_id, max_wait_time=300):
             print("ERROR: RunningHub task did not complete successfully or timed out.", file=sys.stderr)
             return jsonify({"status": "error", "message": "姿勢矯正失敗：RunningHub 任務超時或未成功完成"}), 500
@@ -425,12 +444,16 @@ def pose_correction():
             return jsonify({"status": "error", "message": "姿勢矯正失敗：獲取 RunningHub 結果失敗"}), 500
 
         # 5. 保存結果 (下載到本地)
+        # save_results 會將圖片下載到 output_dir，並返回保存的檔案路徑列表
         saved_local_paths = processor.save_results(results, output_dir=output_dir)
 
         if saved_local_paths:
-            result_path = saved_local_paths[0]
+            # runninghub_processor.py 應該會將結果保存為 PNG 或 JPG
+            # 這裡我們預期它會保存至少一張圖片
+            result_path = saved_local_paths[0] # 取第一張結果圖片
             print(f"DEBUG: Pose correction result generated locally at {result_path}")
 
+            # 上傳姿勢矯正後的圖片到 GCS
             blob_name = upload_image_to_gcs(result_path, GCS_BUCKET)
             signed_url = get_signed_url(GCS_BUCKET, blob_name)
             print(f"INFO: Pose correction successful. Result URL: {signed_url}")
@@ -443,11 +466,12 @@ def pose_correction():
         traceback.print_exc(file=sys.stderr)
         return jsonify({"status": "error", "message": f"姿勢矯正過程中發生錯誤: {e}"}), 500
     finally:
+        # 清理暫存檔案和目錄
         if os.path.exists(save_path):
             os.remove(save_path)
             print(f"DEBUG: Cleaned up temporary input file: {save_path}")
         if os.path.exists(output_dir):
-            shutil.rmtree(output_dir)
+            shutil.rmtree(output_dir) # 刪除整個目錄
             print(f"DEBUG: Cleaned up temporary pose results directory: {output_dir}")
 
 
@@ -457,6 +481,7 @@ def home():
 
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 8080))
+    # 捕獲所有啟動時的異常
     try:
         with app.app_context():
             try:
