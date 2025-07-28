@@ -35,25 +35,7 @@ except ImportError:
 
 class RunningHubImageProcessor:
     """RunningHub 圖像處理器"""
-    def get_default_workflow_id(self) -> str:
-    """
-    從 RunningHub API 自動獲取第一個可用的 Workflow ID
-    """
-    try:
-        url = f"{self.base_url}/task/openapi/workflow/list"
-        resp = self.session.get(url, params={"apiKey": self.api_key}, timeout=15)
-        if resp.status_code == 200:
-            data = resp.json()
-            workflows = data.get("data", [])
-            if workflows:
-                first_id = workflows[0].get("id")
-                print(f"INFO: 自動取得 Workflow ID: {first_id}")
-                return str(first_id)
-        print("WARN: 無法自動獲取 Workflow ID，請確認 API Key 是否有效或手動指定")
-        return None
-    except Exception as e:
-        print(f"ERROR: 獲取 Workflow ID 失敗: {e}")
-        return None
+    
     
     def __init__(self, api_key: str = None, workflow_id: str = None, 
                  load_image_node_id: str = "65", base_url: str = "https://www.runninghub.cn"):
@@ -67,8 +49,15 @@ class RunningHubImageProcessor:
             base_url: API 基礎 URL
         """
         self.api_key = api_key or "dcbfc7a79ccb45b89cea62cdba512755"
-        self.workflow_id = workflow_id or "1944945226931953665"
-        self.load_image_node_id = load_image_node_id
+        # 如果沒有指定 workflow_id，就自動抓第一個可用的
+        if workflow_id:
+            self.workflow_id = workflow_id
+        else:
+            self.workflow_id = self.get_default_workflow_id()
+
+# 保留 node_id，可手動指定
+        self.load_image_node_id = load_image_node_id or "65"
+
         self.base_url = base_url
         
         self.current_task_id = None
