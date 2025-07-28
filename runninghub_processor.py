@@ -12,7 +12,7 @@ import shutil # 導入 shutil 用於刪除目錄
 # 導入 RunningHubImageProcessor (假設 RH05.py 檔案在專案根目錄或 PYTHONPATH 中)
 # 您需要確保 RH05.py 檔案也在您的專案中
 try:
-    from RH05 import RunningHubImageProcessor
+    from runninghub_processor import RunningHubImageProcessor
     print("INFO: Successfully imported RunningHubImageProcessor.")
 except ImportError as e:
     print(f"CRITICAL ERROR: Failed to import RunningHubImageProcessor. Make sure RH05.py is in your project and accessible: {e}", file=sys.stderr)
