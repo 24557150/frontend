@@ -30,9 +30,13 @@ GCS_BUCKET = "cloths"
 
 # 從環境變數獲取 RunningHub API Key，避免寫死在程式碼中
 # 注意：如果 runninghub_processor.py 內部也硬編碼了 Key，則以 runninghub_processor.py 內部為準
-POSE_API_KEY = os.environ.get("POSE_API_KEY", "dcbfc7a79ccb45b89cea62cdba512755")
-if POSE_API_KEY == "dcbfc7a79ccb45b89cea62cdba512755":
-    print("WARN: POSE_API_KEY is not set in environment variables or using default placeholder. Pose correction may fail.", file=sys.stderr)
+try:
+    _dummy_processor = RunningHubImageProcessor()
+    POSE_API_KEY = _dummy_processor.api_key
+    print(f"INFO: Using API Key from RH05.py: {POSE_API_KEY[:8]}...")
+except Exception as e:
+    POSE_API_KEY = None
+    print(f"CRITICAL ERROR: Failed to load API Key from RH05.py: {e}", file=sys.stderr)
 
 _gcs_client_instance = None
 
@@ -133,7 +137,7 @@ def process_and_return(image_bytes, prompt_text="姿勢矯正"):
     os.makedirs(output_dir, exist_ok=True)
 
     try:
-        processor = RunningHubImageProcessor(api_key=POSE_API_KEY, base_url="https://www.runninghub.cn")
+        processor = RunningHubImageProcessor(base_url="https://www.runninghub.cn")
         success = processor.process_image(tmp_input, prompt_text=prompt_text, output_dir=output_dir, max_wait_time=300)
         if not success:
             print("ERROR: RunningHub 處理失敗", file=sys.stderr)
