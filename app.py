@@ -12,13 +12,7 @@ from pathlib import Path
 import shutil # 導入 shutil 用於刪除目錄
 
 # 導入 RunningHubImageProcessor (現在從新的檔案名稱 runninghub_processor.py 導入)
-try:
-    from runninghub_processor import RunningHubImageProcessor
-    print("INFO: Successfully imported RunningHubImageProcessor from runninghub_processor.py.")
-except ImportError as e:
-    print(f"CRITICAL ERROR: Failed to import RunningHubImageProcessor. Make sure runninghub_processor.py is in your project and accessible: {e}", file=sys.stderr)
-    traceback.print_exc(file=sys.stderr)
-    RunningHubImageProcessor = None
+
 
 app = Flask(__name__, static_folder="static", static_url_path="/static")
 CORS(app, supports_credentials=True)
