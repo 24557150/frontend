@@ -25,13 +25,7 @@ GCS_BUCKET = "cloths"
 
 # 從環境變數獲取 RunningHub API Key，避免寫死在程式碼中
 # 注意：如果 runninghub_processor.py 內部也硬編碼了 Key，則以 runninghub_processor.py 內部為準
-try:
-    _dummy_processor = RunningHubImageProcessor()
-    POSE_API_KEY = _dummy_processor.api_key
-    print(f"INFO: Using API Key from RH05.py: {POSE_API_KEY[:8]}...")
-except Exception as e:
-    POSE_API_KEY = None
-    print(f"CRITICAL ERROR: Failed to load API Key from RH05.py: {e}", file=sys.stderr)
+
 
 _gcs_client_instance = None
 
@@ -462,11 +456,9 @@ def pose_correction():
     os.makedirs(output_dir, exist_ok=True)
 
     try:
-        # 在這裡打印實際讀取到的 POSE_API_KEY
-        print(f"DEBUG: POSE_API_KEY read in pose_correction route: {POSE_API_KEY[:8]}...", file=sys.stderr) # 只打印前8位，避免洩露
 
         # 初始化 RunningHubImageProcessor，使用與您提供的 runninghub_processor.py 匹配的 base_url
-        processor = RunningHubImageProcessor(api_key=POSE_API_KEY, base_url="https://www.runninghub.cn")
+        processor = RunningHubImageProcessor(base_url="https://www.runninghub.cn")
         print(f"DEBUG: Initialized RunningHubImageProcessor with base_url: {processor.base_url}")
 
         # --- 多步驟調用 RunningHub API ---
